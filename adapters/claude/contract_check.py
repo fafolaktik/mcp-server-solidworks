@@ -1,0 +1,268 @@
+"""check_contract support: run the cadcritic CLI and map its features onto SolidWorks faces.
+
+cadcritic is reached ONLY as a subprocess (`cadcritic check PART CONTRACT`) — never imported. It
+pulls build123d/OpenCascade, and keeping it behind a process boundary means a missing or broken
+install degrades to one clean tool error instead of touching the MCP server process.
+
+Face mapping is purely geometric. A cadcritic feature descriptor (SPEC.md section 9.1) is paired
+with an analyze_model('faces') entry when ALL of these hold, in METRES after converting
+cadcritic's contract length unit:
+  plane       <-> planar face: normals parallel (|n1 x n2| <= DIR_TOL) AND the face's point lies
+                  within LINEAR_TOL_M of the feature's plane (through its centroid);
+  hole / boss <-> cylinder:    axes parallel (|a1 x a2| <= DIR_TOL) AND |r1 - r2| <= LINEAR_TOL_M
+                  AND the face's axis origin lies within LINEAR_TOL_M of the feature's axis line.
+analyze_model reports no inside/outside sense for a cylinder, so hole and boss both map to
+`cylinder`.
+
+Tie-break: when several faces pass the geometric test and cadcritic reports the feature's
+`area` (plane descriptors only — SPEC 9.1 gives hole/boss no area), keep the faces whose area
+agrees within AREA_TOL_M2. analyze_model cannot say whether a point lies ON a face (it reports
+one representative point per face, no boundary), so there is no centroid-containment test.
+Exactly one face left -> face_index. Zero or several -> face_index null with the reason and
+the candidate indices. Never a guess.
+
+Precision note: analyze_model rounds to 6 decimals in SI units — <= 5e-7 m per coordinate and
+<= 5e-7 m2 per area (i.e. areas are only known to ~1 mm2).
+"""
+import json
+import math
+import os
+import shutil
+import subprocess
+import sys
+
+DIR_TOL = 1e-5        # |sin(angle)| between unit vectors
+LINEAR_TOL_M = 1e-5   # radius, point-on-axis, plane offset — metres
+AREA_TOL_M2 = 1e-6    # tie-break only: two rounding half-steps of analyze_model's m2 area
+
+_UNIT_TO_M = {"mm": 1e-3, "cm": 1e-2, "m": 1.0, "in": 0.0254}
+
+# cadcritic exit codes (SPEC.md section 2): 0/1 = completed report; 2/3/4 = error document.
+_REPORT_EXITS = (0, 1)
+
+
+# ---------------------------------------------------------------------------
+# Process boundary
+# ---------------------------------------------------------------------------
+def find_cadcritic(configured: str = "") -> str:
+    """Resolve the cadcritic executable: explicit config, else the console script installed
+    beside THIS interpreter (the adapter's own environment), else PATH. '' when not found."""
+    if configured:
+        return configured if os.path.isfile(configured) else ""
+    scripts = os.path.dirname(sys.executable)
+    for name in ("cadcritic.exe", "cadcritic"):
+        for folder in (scripts, os.path.join(scripts, "Scripts")):
+            candidate = os.path.join(folder, name)
+            if os.path.isfile(candidate):
+                return candidate
+    return shutil.which("cadcritic") or ""
+
+
+def run_cadcritic(exe: str, step_path: str, contract_path: str, timeout: float):
+    """Run `cadcritic check STEP CONTRACT`; return (exit_code, stdout_text, stderr_text).
+
+    stdin is DEVNULL: the MCP server speaks JSON-RPC over its own stdin/stdout, and an inherited
+    handle would let the child read (or write) the protocol stream. CREATE_NO_WINDOW stops a
+    console flash on Windows. Raises subprocess.TimeoutExpired / OSError to the caller."""
+    creationflags = 0x08000000 if os.name == "nt" else 0
+    proc = subprocess.run(
+        [exe, "check", step_path, contract_path],
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        timeout=timeout,
+        creationflags=creationflags,
+    )
+    return (proc.returncode,
+            proc.stdout.decode("utf-8", errors="replace"),
+            proc.stderr.decode("utf-8", errors="replace"))
+
+
+def parse_report(exit_code: int, stdout: str, stderr: str):
+    """Return (report, None) for a completed check, or (None, 'FAILED | ...') otherwise."""
+    try:
+        doc = json.loads(stdout) if stdout.strip() else None
+    except ValueError:
+        doc = None
+    if exit_code in _REPORT_EXITS and isinstance(doc, dict) and doc.get("command") == "check":
+        return doc, None
+    err = (doc or {}).get("error") if isinstance(doc, dict) else None
+    if isinstance(err, dict):
+        kind = str(err.get("kind") or "unknown").upper()
+        return None, f"FAILED | CADCRITIC_{kind} | exit={exit_code} | {err.get('message')}"
+    tail = (stderr.strip().splitlines() or ["(no stderr)"])[-1]
+    return None, f"FAILED | CADCRITIC_FAILED | exit={exit_code} | {tail}"
+
+
+# ---------------------------------------------------------------------------
+# Geometry
+# ---------------------------------------------------------------------------
+def _vec(v):
+    if not (isinstance(v, (list, tuple)) and len(v) == 3):
+        return None
+    try:
+        return [float(x) for x in v]
+    except (TypeError, ValueError):
+        return None
+
+
+def _unit(v):
+    n = math.sqrt(sum(x * x for x in v))
+    return [x / n for x in v] if n > 0 else None
+
+
+def _cross_norm(a, b):
+    return math.sqrt((a[1] * b[2] - a[2] * b[1]) ** 2
+                     + (a[2] * b[0] - a[0] * b[2]) ** 2
+                     + (a[0] * b[1] - a[1] * b[0]) ** 2)
+
+
+def _dot(a, b):
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+
+
+def _sub(a, b):
+    return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
+
+
+def _scale(v, s):
+    return [x * s for x in v]
+
+
+_MATCHED_LENGTHS = {"plane": ("centroid",), "hole": ("center", "radius"), "boss": ("center", "radius")}
+
+
+def _length_unit(descriptor: dict, report_unit: str):
+    """The unit of the length members the match actually compares (the descriptor's own `units`
+    map wins over the report's). Members that disagree yield a unit name that never converts."""
+    units = descriptor.get("units") or {}
+    found = {units.get(k) or report_unit for k in _MATCHED_LENGTHS.get(descriptor.get("type"), ())}
+    if len(found) > 1:
+        return "/".join(sorted(str(u) for u in found))
+    return found.pop() if found else report_unit
+
+
+def _plane_matches(desc: dict, to_m: float, face: dict) -> bool:
+    if not face.get("planar"):
+        return False
+    n_cc, c_cc = _vec(desc.get("normal")), _vec(desc.get("centroid"))
+    n_sw, p_sw = _vec(face.get("normal")), _vec(face.get("point"))
+    if None in (n_cc, c_cc, n_sw, p_sw):
+        return False
+    n_cc, n_sw = _unit(n_cc), _unit(n_sw)
+    if n_cc is None or n_sw is None or _cross_norm(n_cc, n_sw) > DIR_TOL:
+        return False
+    return abs(_dot(n_cc, _sub(p_sw, _scale(c_cc, to_m)))) <= LINEAR_TOL_M
+
+
+def _cylinder_matches(desc: dict, to_m: float, face: dict) -> bool:
+    if face.get("kind") != "cylinder":
+        return False
+    a_cc, c_cc = _vec(desc.get("axis")), _vec(desc.get("center"))
+    a_sw, o_sw = _vec(face.get("axis")), _vec(face.get("origin"))
+    if None in (a_cc, c_cc, a_sw, o_sw):
+        return False
+    try:
+        r_cc, r_sw = float(desc["radius"]) * to_m, float(face["radius"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    a_cc, a_sw = _unit(a_cc), _unit(a_sw)
+    if a_cc is None or a_sw is None or _cross_norm(a_cc, a_sw) > DIR_TOL:
+        return False
+    if abs(r_cc - r_sw) > LINEAR_TOL_M:
+        return False
+    # Distance from SolidWorks' axis origin to cadcritic's axis line.
+    return _cross_norm(_sub(o_sw, _scale(c_cc, to_m)), a_cc) <= LINEAR_TOL_M
+
+
+def match_descriptor(desc: dict, faces: list, report_unit: str) -> dict:
+    """{'status': matched|unmatched|multiple, 'candidates': [...], 'reason'?: str}."""
+    ftype = desc.get("type")
+    unit = _length_unit(desc, report_unit)
+    if unit not in _UNIT_TO_M:
+        return {"status": "unmatched", "candidates": [], "reason": f"unknown length unit {unit!r}"}
+    if ftype == "plane":
+        test = _plane_matches
+    elif ftype in ("hole", "boss"):
+        test = _cylinder_matches
+    else:
+        return {"status": "unmatched", "candidates": [], "reason": f"unknown feature type {ftype!r}"}
+    to_m = _UNIT_TO_M[unit]
+    hits = sorted((f for f in faces
+                   if isinstance(f, dict) and isinstance(f.get("i"), int) and test(desc, to_m, f)),
+                  key=lambda f: f["i"])
+    candidates = [f["i"] for f in hits]
+    if len(candidates) == 1:
+        return {"status": "matched", "candidates": candidates}
+    if not candidates:
+        return {"status": "unmatched", "candidates": [],
+                "reason": "no analyze_model face within tolerance"}
+    return _break_tie_by_area(desc, to_m, hits)
+
+
+def _break_tie_by_area(desc: dict, to_m: float, hits: list) -> dict:
+    """Several geometric candidates: keep those whose area agrees with cadcritic's, if reported."""
+    candidates = [f["i"] for f in hits]
+    area = desc.get("area")
+    if not isinstance(area, (int, float)) or isinstance(area, bool):
+        return {"status": "multiple", "candidates": candidates,
+                "reason": f"{len(candidates)} faces within tolerance; cadcritic reports no area "
+                          f"for a {desc.get('type')} to separate them"}
+    area_m2 = float(area) * to_m * to_m
+    same = [f["i"] for f in hits if isinstance(f.get("area"), (int, float))
+            and abs(float(f["area"]) - area_m2) <= AREA_TOL_M2]
+    if len(same) == 1:
+        return {"status": "matched", "candidates": same, "resolved_by": "area",
+                "geometric_candidates": candidates}
+    if not same:
+        return {"status": "multiple", "candidates": candidates,
+                "reason": f"{len(candidates)} faces within tolerance; none has the feature's area "
+                          f"(the feature may span several faces)"}
+    return {"status": "multiple", "candidates": same,
+            "reason": f"{len(same)} faces within tolerance share the feature's area",
+            "geometric_candidates": candidates}
+
+
+def _descriptor_lists(requirement: dict):
+    yield requirement.get("features") or []
+    err = requirement.get("error")
+    if isinstance(err, dict):
+        yield err.get("matched") or []
+
+
+def annotate_report(report: dict, faces: list) -> dict:
+    """Return a copy of cadcritic's check report with `face_index` (+ `face_match`) on every
+    feature descriptor, a top-level `score` = [error_count, violation_score] (SPEC 9.2's
+    comparison key) and a `face_mapping` summary listing every unresolved feature by id."""
+    out = json.loads(json.dumps(report))
+    report_unit = (out.get("units") or {}).get("length", "mm")
+    resolved: dict = {}      # feature id -> match result (identical for every occurrence)
+    used_by: dict = {}       # feature id -> requirement ids, in contract order
+    for req in out.get("requirements") or []:
+        for descriptors in _descriptor_lists(req):
+            for desc in descriptors:
+                fid = desc.get("id")
+                if fid not in resolved:
+                    resolved[fid] = match_descriptor(desc, faces, report_unit)
+                m = resolved[fid]
+                desc["face_index"] = m["candidates"][0] if m["status"] == "matched" else None
+                desc["face_match"] = dict(m)
+                ids = used_by.setdefault(fid, [])
+                if req.get("id") not in ids:
+                    ids.append(req.get("id"))
+
+    def _entries(status):
+        return [{"id": fid, "candidates": m["candidates"], "reason": m.get("reason"),
+                 "requirements": used_by[fid]}
+                for fid, m in resolved.items() if m["status"] == status]
+
+    out["score"] = [out.get("error_count"), out.get("violation_score")]
+    out["face_mapping"] = {
+        "source": "analyze_model(faces)",
+        "tolerance": {"direction_sin": DIR_TOL, "linear_m": LINEAR_TOL_M,
+                      "area_tie_break_m2": AREA_TOL_M2},
+        "features": len(resolved),
+        "matched": sum(1 for m in resolved.values() if m["status"] == "matched"),
+        "unmatched": _entries("unmatched"),
+        "multiple": _entries("multiple"),
+    }
+    return out

@@ -590,6 +590,17 @@
   },
   "output": "One-line report: verified_criteria PASS/FAIL | topology A/B (EXACT|DIFFER) | volume A/B + dV% | area A/B + dA% | cg_distance. With detail='faces', a trailing faces: matched/MISSING/EXTRA breakdown."
  },
+ "check_contract": {
+  "description": "[ADAPTER-ONLY — no ToolController/SolidWorksService case] Design-contract check of the ACTIVE part through the external cadcritic CLI. The adapter exports the part to a temporary STEP via the EXISTING export_document op, runs `cadcritic check <step> <contract>` as a SUBPROCESS (cadcritic is never imported — process boundary; stdout is its one JSON document, exit 0/1 = report, 2/3/4 = error document), reads analyze_model(faces), and maps every cadcritic feature descriptor to a face index by geometry in metres: same type (plane <-> planar face; hole/boss <-> cylinder — analyze_model carries no inside/outside sense), normal/axis parallel (|sin| <= 1e-5), radius within 1e-5 m, plane offset or point-on-axis within 1e-5 m after converting the contract length unit. Several candidates -> tie-break by area (face area vs cadcritic's descriptor area within 1e-6 m2; plane descriptors only — cadcritic reports no hole/boss area; analyze_model exposes no face boundary, so there is no point-on-face test). Exactly one face left -> face_index (face_match.resolved_by='area' when the tie-break decided); zero or several -> face_index null, reported explicitly in face_mapping (never guessed). The temporary STEP is deleted afterwards. Read-only: no geometry or state_version change.",
+  "input": {
+   "operation_id": "n/a at this level — the underlying export_document / analyze_model calls each carry their own operation_id (uuid4) on /api/tool/execute",
+   "state_version": "n/a at this level — the underlying calls thread the adapter's tracked state_version (one-shot resync-retry on INVALID_STATE_VERSION)",
+   "params": {
+    "contract_path": "string (required — absolute path of the cadcritic design-contract JSON; keep-out STEP paths inside it resolve relative to the contract's folder)"
+   }
+  },
+  "output": "cadcritic's check report JSON (SPEC.md section 9) with, per feature descriptor (requirements[].features[] and requirements[].error.matched[]), face_index (int | null) + face_match {status: matched|unmatched|multiple, candidates, reason?, resolved_by?, geometric_candidates?}; top-level score = [error_count, violation_score]; top-level face_mapping {source, tolerance, features, matched, unmatched[], multiple[]}. FAILED | <CODE> | ... string on contract-not-found, cadcritic-not-found, export/analyze failure, cadcritic usage/input/processing error, or timeout."
+ },
  "open_new_assembly": {
   "description": "Opens a new blank ASSEMBLY document (the twin of open_new_part). Template: explicit template_path, else the user-configured default assembly template, else the first *.asmdot found. Bumps state_version.",
   "input": {

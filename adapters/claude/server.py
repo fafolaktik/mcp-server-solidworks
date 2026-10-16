@@ -2,7 +2,10 @@ import hashlib
 import inspect
 import json
 import os
+import shutil
+import subprocess
 import sys
+import tempfile
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated, Literal, Optional
@@ -12,6 +15,9 @@ from mcp.server.caching import CacheHint
 from mcp.server.mcpserver.exceptions import ResourceError
 from execution_client import call_tool, get_state, ensure_ready as _ensure_ready, ExecutionLayerError
 from response_mapper import map_response
+from adapter_log import write as _log
+from config import CADCRITIC_EXE, CADCRITIC_TIMEOUT
+import contract_check
 # NOTE: pycompiler is reached via `from ir_execution_port import run_feature_graph` imported
 # LAZILY inside rebuild_from_ir and submit_feature_graph — a missing compiler tree degrades to a
 # clean tool error instead of killing the whole MCP server at startup.
@@ -2578,6 +2584,80 @@ def compare_assemblies(doc_a: str, doc_b: str) -> str:
             f"{'OK' if transforms_ok else 'FAIL'} | "
             f"mates A={len(mates_a)} B={len(mates_b)} types={'MATCH' if types_a == types_b else 'DIFFER'} | "
             f"volume dV={fmt(dv, '.4f')}% area dA={fmt(da, '.4f')}% | reference=A ({doc_a})")
+
+
+# ---------------------------------------------------------------------------
+# Tool: check_contract  (adapter-only — design-contract check via the cadcritic CLI)
+# ---------------------------------------------------------------------------
+@mcp.tool(structured_output=False)
+def check_contract(contract_path: str) -> str:
+    """Check the ACTIVE part against a cadcritic design contract and point each residual at a face.
+
+    Exports the part to a temporary STEP, runs `cadcritic check` on it (exact B-rep evaluation,
+    a separate process), and maps every feature cadcritic reports onto analyze_model('faces')
+    indices by geometry: same type (plane / cylinder), parallel normal or axis, same radius, and
+    same plane or axis line — all within 1e-5 (metres for lengths). Several faces passing →
+    the one whose area equals cadcritic's (planes only; cadcritic gives holes/bosses no area).
+
+    contract_path: absolute path of the contract JSON (keep-out paths in it resolve relative to
+        the contract's folder).
+    Returns cadcritic's check report as JSON, unchanged except for:
+      - every feature descriptor gains `face_index` (the face to edit — same index as
+        create_sketch(face_index) / extrude_feature(up_to_face_index)) and `face_match`;
+        face_index is null when zero faces, or several that area cannot separate, matched —
+        never guessed;
+      - `score` = [error_count, violation_score]: the comparison key (lexicographically
+        smaller = better design; compare successive revisions with it);
+      - `face_mapping`: counts plus every unmatched / multiply-matched feature by id.
+    Requirement results carry measured / range / residual (signed, in the contract's units).
+    Read-only: does NOT change the model or state_version."""
+    contract = os.path.abspath(contract_path)
+    if not os.path.isfile(contract):
+        return f"FAILED | CONTRACT_NOT_FOUND | {contract}"
+    exe = contract_check.find_cadcritic(CADCRITIC_EXE)
+    if not exe:
+        return ("FAILED | CADCRITIC_NOT_FOUND | install cadcritic into the adapter's Python "
+                "environment or set CADCRITIC_EXE")
+
+    tmp = tempfile.mkdtemp(prefix="solidpilot-check-")
+    step = os.path.join(tmp, "active_part.step")
+    _log(f"-> check_contract contract={contract} step={step}")
+    try:
+        exported = _call_raw("export_document", {"format": "STEP", "file_path": step})
+        if exported.get("status") != "COMPLETED":
+            err = exported.get("error") or {}
+            return f"FAILED | EXPORT_FAILED | {err.get('code')}: {err.get('message')}"
+        if not os.path.isfile(step) or os.path.getsize(step) == 0:
+            return f"FAILED | EXPORT_FAILED | no STEP written at {step}"
+
+        try:
+            items = _analysis_items(_call_raw("analyze_model", {"analysis_type": "faces", "name": ""}))
+            faces = json.loads(items[0]).get("faces", []) if items else []
+        except (RuntimeError, ValueError, TypeError) as ex:
+            return f"FAILED | ANALYZE_FAILED | {ex}"
+
+        try:
+            code, out, err_text = contract_check.run_cadcritic(exe, step, contract, CADCRITIC_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            _log(f"!! check_contract cadcritic timed out after {CADCRITIC_TIMEOUT}s")
+            return f"FAILED | CADCRITIC_TIMEOUT | no result within {CADCRITIC_TIMEOUT}s"
+        except OSError as ex:
+            _log(f"!! check_contract cadcritic did not start: {ex}")
+            return f"FAILED | CADCRITIC_NOT_STARTED | {ex}"
+        _log(f"<- check_contract cadcritic exit={code} stdout={len(out)}B faces={len(faces)}")
+
+        report, failure = contract_check.parse_report(code, out, err_text)
+        if failure:
+            _log(f"!! check_contract {failure}")
+            return failure
+        result = contract_check.annotate_report(report, faces)
+        fm = result["face_mapping"]
+        _log(f"<- check_contract score={result['score']} matched={fm['matched']}/{fm['features']} "
+             f"unmatched={[e['id'] for e in fm['unmatched']]} "
+             f"multiple={[e['id'] for e in fm['multiple']]}")
+        return json.dumps(result, indent=2, sort_keys=True)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 # ---------------------------------------------------------------------------

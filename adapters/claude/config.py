@@ -40,3 +40,9 @@ _DEFAULT_EXE = os.path.normpath(
 EXECUTION_EXE_PATH = os.getenv("EXECUTION_EXE_PATH", _DEFAULT_EXE)
 # How long to wait for a freshly-spawned server to answer /health before giving up.
 SERVER_SPAWN_TIMEOUT = float(os.getenv("SERVER_SPAWN_TIMEOUT", "20"))
+
+# check_contract shells out to the `cadcritic` CLI (a process boundary — never imported).
+# Blank = the console script installed beside this interpreter, then PATH.
+CADCRITIC_EXE = os.getenv("CADCRITIC_EXE", "")
+# cadcritic evaluates the exact B-rep (booleans for clearance/interference/mirror) — give it room.
+CADCRITIC_TIMEOUT = float(os.getenv("CADCRITIC_TIMEOUT", "300"))

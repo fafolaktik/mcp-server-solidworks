@@ -1,0 +1,314 @@
+{
+  "keepouts": {
+    "mating_part": "keepout.step"
+  },
+  "requirements": [
+    {
+      "axis": "x",
+      "id": "R01-base-length",
+      "quantity": "size",
+      "range": [
+        79.9,
+        80.1
+      ],
+      "type": "bbox"
+    },
+    {
+      "axis": "z",
+      "id": "R02-height",
+      "quantity": "max",
+      "range": [
+        49.5,
+        50.5
+      ],
+      "type": "bbox"
+    },
+    {
+      "id": "R03-hole-left-diameter",
+      "range": [
+        8.35,
+        8.55
+      ],
+      "select": {
+        "region": {
+          "max": [
+            0,
+            null,
+            null
+          ]
+        },
+        "type": "hole"
+      },
+      "type": "hole_diameter"
+    },
+    {
+      "id": "R04-hole-right-diameter",
+      "range": [
+        8.35,
+        8.55
+      ],
+      "select": {
+        "region": {
+          "min": [
+            0,
+            null,
+            null
+          ]
+        },
+        "type": "hole"
+      },
+      "type": "hole_diameter"
+    },
+    {
+      "direction": [
+        1,
+        0,
+        0
+      ],
+      "id": "R05-hole-pitch",
+      "range": [
+        49.9,
+        50.1
+      ],
+      "select": {
+        "axis": [
+          0,
+          0,
+          1
+        ],
+        "count": 2,
+        "type": "hole"
+      },
+      "type": "hole_spacing"
+    },
+    {
+      "id": "R06-hole-left-position",
+      "point": [
+        -25,
+        25,
+        0
+      ],
+      "range": [
+        0,
+        0.05
+      ],
+      "select": {
+        "region": {
+          "max": [
+            0,
+            null,
+            null
+          ]
+        },
+        "type": "hole"
+      },
+      "type": "hole_position"
+    },
+    {
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "id": "R07-hole-left-axis",
+      "range": [
+        0,
+        0.5
+      ],
+      "select": {
+        "region": {
+          "max": [
+            0,
+            null,
+            null
+          ]
+        },
+        "type": "hole"
+      },
+      "type": "hole_axis"
+    },
+    {
+      "a": {
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "region": {
+          "max": [
+            null,
+            null,
+            6.5
+          ],
+          "min": [
+            null,
+            null,
+            5.5
+          ]
+        },
+        "type": "plane"
+      },
+      "b": {
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "normal_tol_deg": 10,
+        "region": {
+          "max": [
+            null,
+            20,
+            60
+          ],
+          "min": [
+            null,
+            -10,
+            10
+          ]
+        },
+        "type": "plane"
+      },
+      "id": "R08-flange-perpendicular",
+      "range": [
+        0,
+        0.1
+      ],
+      "type": "perpendicular"
+    },
+    {
+      "a": {
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "normal_tol_deg": 10,
+        "region": {
+          "min": [
+            null,
+            null,
+            40
+          ]
+        },
+        "type": "plane"
+      },
+      "b": {
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "region": {
+          "max": [
+            null,
+            null,
+            1
+          ]
+        },
+        "type": "plane"
+      },
+      "id": "R09-flange-top-parallel",
+      "range": [
+        0,
+        0.1
+      ],
+      "type": "parallel"
+    },
+    {
+      "a": {
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "region": {
+          "max": [
+            0,
+            null,
+            20
+          ],
+          "min": [
+            null,
+            null,
+            6.5
+          ]
+        },
+        "type": "plane"
+      },
+      "b": {
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "region": {
+          "max": [
+            null,
+            null,
+            20
+          ],
+          "min": [
+            0,
+            null,
+            6.5
+          ]
+        },
+        "type": "plane"
+      },
+      "id": "R10-pads-coplanar",
+      "range": [
+        0,
+        0.05
+      ],
+      "type": "coplanar"
+    },
+    {
+      "id": "R11-mirror-x",
+      "plane": {
+        "normal": [
+          1,
+          0,
+          0
+        ],
+        "point": [
+          0,
+          0,
+          0
+        ]
+      },
+      "range": [
+        0,
+        60
+      ],
+      "type": "mirror_symmetry"
+    },
+    {
+      "id": "R12-keepout-clearance",
+      "keepout": "mating_part",
+      "range": [
+        2,
+        null
+      ],
+      "type": "clearance"
+    },
+    {
+      "id": "R13-keepout-interference",
+      "keepout": "mating_part",
+      "range": [
+        0,
+        1
+      ],
+      "type": "interference"
+    },
+    {
+      "id": "R14-volume",
+      "range": [
+        38000,
+        47000
+      ],
+      "type": "volume"
+    }
+  ],
+  "schema_version": 1
+}
