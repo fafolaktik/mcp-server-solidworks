@@ -38,10 +38,10 @@ Rules that must never be violated:
 
 ### Building and running the execution layer
 
-Build (`-restore` fetches the NuGet packages from `packages.config` into `execution\solidworks\packages\`):
+Build (`-restore -p:RestorePackagesConfig=true` fetches the NuGet packages from `packages.config` into `execution\solidworks\packages\`; the flag must be on the command line — solution-level restore ignores it inside the csproj):
 
 ```
-& "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" execution\solidworks\SolidworksExecution.sln -restore /t:Build /p:Configuration=Debug
+& "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" execution\solidworks\SolidworksExecution.sln -restore -p:RestorePackagesConfig=true /t:Build /p:Configuration=Debug
 ```
 
 Restart (headless, `http://localhost:5000`):
