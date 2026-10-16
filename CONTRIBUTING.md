@@ -32,15 +32,16 @@ Rules that must never be violated:
 
 ### Requirements
 - Windows and **SolidWorks 2026** (development happens against a local SolidWorks install).
-- **.NET Framework 4.8** and MSBuild (ships with Visual Studio 2022).
+- **.NET Framework 4.8 Developer Pack** (the 4.8 targeting pack — the 4.8.1 pack alone does not satisfy a v4.8 project) and MSBuild 16.5+ (Visual Studio 2019/2022 or their Build Tools).
+- The SolidWorks interop assemblies are vendored in `execution/solidworks/lib/`; the build does not depend on where SolidWorks is installed.
 - **Python 3.x** and the official **MCP Python SDK v2** (`mcp>=2.0.0`) for the MCP adapter.
 
 ### Building and running the execution layer
 
-Build:
+Build (`-restore` fetches the NuGet packages from `packages.config` into `execution\solidworks\packages\`):
 
 ```
-& "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" execution\solidworks\SolidworksExecution.sln /t:Build /p:Configuration=Debug
+& "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" execution\solidworks\SolidworksExecution.sln -restore /t:Build /p:Configuration=Debug
 ```
 
 Restart (headless, `http://localhost:5000`):
