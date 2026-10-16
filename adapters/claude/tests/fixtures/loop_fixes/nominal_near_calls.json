@@ -1,0 +1,50 @@
+[
+ {
+  "tool": "analyze_model",
+  "params": {
+   "analysis_type": "faces",
+   "name": "",
+   "near": "[-0.025, 0.025, 0.008]",
+   "k": 1
+  },
+  "response": {
+   "operationId": "2cbac18d-7ac8-4019-8536-5e1ad928ab73",
+   "status": "COMPLETED",
+   "verified": true,
+   "stateVersion": 2,
+   "cadState": {
+    "stateVersion": 2,
+    "activeDocument": "bracket_dimensioned.SLDPRT",
+    "documentType": "PART",
+    "features": [
+     "{\"face_count\":1,\"total_face_count\":14,\"near\":[-0.025,0.025,0.008],\"k\":1,\"faces\":[{\"i\":9,\"planar\":true,\"area\":0.000145,\"normal\":[0.0,0.0,1.0],\"point\":[-0.025,0.025,0.008],\"dist\":0.0}]}"
+    ],
+    "dimensions": []
+   }
+  }
+ },
+ {
+  "tool": "analyze_model",
+  "params": {
+   "analysis_type": "faces",
+   "name": "",
+   "near": "[0.025, 0.025, 0.008]",
+   "k": 1
+  },
+  "response": {
+   "operationId": "a008f91f-f9a8-4c82-8e57-2d62eada4127",
+   "status": "COMPLETED",
+   "verified": true,
+   "stateVersion": 2,
+   "cadState": {
+    "stateVersion": 2,
+    "activeDocument": "bracket_dimensioned.SLDPRT",
+    "documentType": "PART",
+    "features": [
+     "{\"face_count\":1,\"total_face_count\":14,\"near\":[0.025,0.025,0.008],\"k\":1,\"faces\":[{\"i\":11,\"planar\":true,\"area\":0.000145,\"normal\":[0.0,0.0,1.0],\"point\":[0.025,0.025,0.008],\"dist\":0.0}]}"
+    ],
+    "dimensions": []
+   }
+  }
+ }
+]

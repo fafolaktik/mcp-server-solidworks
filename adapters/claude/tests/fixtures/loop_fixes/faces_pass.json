@@ -1,0 +1,484 @@
+{
+ "0": {
+  "dimension": {
+   "name": "D4@Sketch1@bracket_dimensioned.Part",
+   "points": [
+    {
+     "endpoint_of": [
+      4,
+      5
+     ],
+     "x": 0.0,
+     "y": 0.05
+    },
+    {
+     "endpoint_of": [
+      0,
+      5
+     ],
+     "x": 0.0,
+     "y": 0.0
+    }
+   ],
+   "segments": [],
+   "type": "linear",
+   "value_si": 0.05
+  },
+  "face_index": 0,
+  "face_kind": "plane",
+  "feature": "Boss-Extrude1",
+  "role": "side_wall",
+  "segment": {
+   "construction": false,
+   "index": 5,
+   "kind": "line",
+   "x1": 0.0,
+   "x2": 0.0,
+   "y1": 0.05,
+   "y2": 0.0
+  },
+  "sketch": "Sketch1",
+  "status": "dimensioned"
+ },
+ "1": {
+  "dimension": {
+   "name": "D1@Sketch1@bracket_dimensioned.Part",
+   "points": [
+    {
+     "endpoint_of": [
+      0,
+      5
+     ],
+     "x": 0.0,
+     "y": 0.0
+    },
+    {
+     "endpoint_of": [
+      0,
+      1
+     ],
+     "x": 0.04,
+     "y": 0.0
+    }
+   ],
+   "segments": [],
+   "type": "linear",
+   "value_si": 0.04
+  },
+  "face_index": 1,
+  "face_kind": "plane",
+  "feature": "Boss-Extrude1",
+  "role": "side_wall",
+  "segment": {
+   "construction": false,
+   "index": 0,
+   "kind": "line",
+   "x1": 0.0,
+   "x2": 0.04,
+   "y1": 0.0,
+   "y2": 0.0
+  },
+  "sketch": "Sketch1",
+  "status": "dimensioned"
+ },
+ "2": {
+  "dimension": {
+   "name": "D2@Sketch1@bracket_dimensioned.Part",
+   "points": [
+    {
+     "endpoint_of": [
+      0,
+      1
+     ],
+     "x": 0.04,
+     "y": 0.0
+    },
+    {
+     "endpoint_of": [
+      1,
+      2
+     ],
+     "x": 0.04,
+     "y": 0.006
+    }
+   ],
+   "segments": [],
+   "type": "linear",
+   "value_si": 0.006
+  },
+  "face_index": 2,
+  "face_kind": "plane",
+  "feature": "Boss-Extrude1",
+  "role": "side_wall",
+  "segment": {
+   "construction": false,
+   "index": 1,
+   "kind": "line",
+   "x1": 0.04,
+   "x2": 0.04,
+   "y1": 0.0,
+   "y2": 0.006
+  },
+  "sketch": "Sketch1",
+  "status": "dimensioned"
+ },
+ "3": {
+  "add_dimension": {
+   "label_offset_x": 0.0,
+   "label_offset_y": -0.008,
+   "px": 0.023,
+   "py": 0.006,
+   "value": 0.034
+  },
+  "face_index": 3,
+  "face_kind": "plane",
+  "feature": "Boss-Extrude1",
+  "reason": "no driving dimension is attached to segment 2 of Sketch1",
+  "role": "side_wall",
+  "segment": {
+   "construction": false,
+   "index": 2,
+   "kind": "line",
+   "x1": 0.04,
+   "x2": 0.006,
+   "y1": 0.006,
+   "y2": 0.006
+  },
+  "sketch": "Sketch1",
+  "status": "undimensioned"
+ },
+ "4": {
+  "add_dimension": {
+   "label_offset_x": 0.0,
+   "label_offset_y": -0.008,
+   "px": 0.006,
+   "py": 0.028,
+   "value": 0.044000000000000004
+  },
+  "face_index": 4,
+  "face_kind": "plane",
+  "feature": "Boss-Extrude1",
+  "reason": "no driving dimension is attached to segment 3 of Sketch1",
+  "role": "side_wall",
+  "segment": {
+   "construction": false,
+   "index": 3,
+   "kind": "line",
+   "x1": 0.006,
+   "x2": 0.006,
+   "y1": 0.006,
+   "y2": 0.05
+  },
+  "sketch": "Sketch1",
+  "status": "undimensioned"
+ },
+ "5": {
+  "dimension": {
+   "name": "D3@Sketch1@bracket_dimensioned.Part",
+   "points": [
+    {
+     "endpoint_of": [
+      3,
+      4
+     ],
+     "x": 0.006,
+     "y": 0.05
+    },
+    {
+     "endpoint_of": [
+      4,
+      5
+     ],
+     "x": 0.0,
+     "y": 0.05
+    }
+   ],
+   "segments": [],
+   "type": "linear",
+   "value_si": 0.006
+  },
+  "face_index": 5,
+  "face_kind": "plane",
+  "feature": "Boss-Extrude1",
+  "role": "side_wall",
+  "segment": {
+   "construction": false,
+   "index": 4,
+   "kind": "line",
+   "x1": 0.006,
+   "x2": 0.0,
+   "y1": 0.05,
+   "y2": 0.05
+  },
+  "sketch": "Sketch1",
+  "status": "dimensioned"
+ },
+ "6": {
+  "dimension": {
+   "name": "D1@Boss-Extrude1@bracket_dimensioned.Part",
+   "type": "depth",
+   "value_si": 0.08
+  },
+  "face_index": 6,
+  "face_kind": "plane",
+  "feature": "Boss-Extrude1",
+  "role": "extrude_cap",
+  "sketch": "Sketch1",
+  "status": "dimensioned"
+ },
+ "7": {
+  "dimension": {
+   "name": "D1@Boss-Extrude1@bracket_dimensioned.Part",
+   "type": "depth",
+   "value_si": 0.08
+  },
+  "face_index": 7,
+  "face_kind": "plane",
+  "feature": "Boss-Extrude1",
+  "role": "extrude_cap",
+  "sketch": "Sketch1",
+  "status": "dimensioned"
+ },
+ "8": {
+  "dimension": {
+   "name": "D1@Sketch2@bracket_dimensioned.Part",
+   "segments": [
+    0
+   ],
+   "type": "diameter",
+   "value_si": 0.016
+  },
+  "face_index": 8,
+  "face_kind": "cylinder",
+  "feature": "Boss-Extrude2",
+  "position_dimensions": [
+   {
+    "external": 1,
+    "name": "D2@Sketch2@bracket_dimensioned.Part",
+    "points": [
+     {
+      "center_of": 0,
+      "x": 0.025,
+      "y": 0.025
+     }
+    ],
+    "segments": [],
+    "type": "horizontal",
+    "value_si": 0.025
+   },
+   {
+    "external": 1,
+    "name": "D3@Sketch2@bracket_dimensioned.Part",
+    "points": [
+     {
+      "center_of": 0,
+      "x": 0.025,
+      "y": 0.025
+     }
+    ],
+    "segments": [],
+    "type": "vertical",
+    "value_si": 0.025
+   }
+  ],
+  "role": "cylinder_wall",
+  "segment": {
+   "construction": false,
+   "cx": 0.025,
+   "cy": 0.025,
+   "index": 0,
+   "kind": "arc/circle",
+   "radius": 0.008
+  },
+  "sketch": "Sketch2",
+  "status": "dimensioned"
+ },
+ "9": {
+  "dimension": {
+   "name": "D1@Boss-Extrude2@bracket_dimensioned.Part",
+   "type": "depth",
+   "value_si": 0.008
+  },
+  "face_index": 9,
+  "face_kind": "plane",
+  "feature": "Boss-Extrude2",
+  "role": "extrude_cap",
+  "sketch": "Sketch2",
+  "status": "dimensioned"
+ },
+ "10": {
+  "dimension": {
+   "name": "D1@Sketch3@bracket_dimensioned.Part",
+   "segments": [
+    0
+   ],
+   "type": "diameter",
+   "value_si": 0.016
+  },
+  "face_index": 10,
+  "face_kind": "cylinder",
+  "feature": "Boss-Extrude3",
+  "position_dimensions": [
+   {
+    "external": 1,
+    "name": "D2@Sketch3@bracket_dimensioned.Part",
+    "points": [
+     {
+      "center_of": 0,
+      "x": 0.025,
+      "y": -0.025
+     }
+    ],
+    "segments": [],
+    "type": "horizontal",
+    "value_si": 0.025
+   },
+   {
+    "external": 1,
+    "name": "D3@Sketch3@bracket_dimensioned.Part",
+    "points": [
+     {
+      "center_of": 0,
+      "x": 0.025,
+      "y": -0.025
+     }
+    ],
+    "segments": [],
+    "type": "vertical",
+    "value_si": 0.025
+   }
+  ],
+  "role": "cylinder_wall",
+  "segment": {
+   "construction": false,
+   "cx": 0.025,
+   "cy": -0.025,
+   "index": 0,
+   "kind": "arc/circle",
+   "radius": 0.008
+  },
+  "sketch": "Sketch3",
+  "status": "dimensioned"
+ },
+ "11": {
+  "dimension": {
+   "name": "D1@Boss-Extrude3@bracket_dimensioned.Part",
+   "type": "depth",
+   "value_si": 0.008
+  },
+  "face_index": 11,
+  "face_kind": "plane",
+  "feature": "Boss-Extrude3",
+  "role": "extrude_cap",
+  "sketch": "Sketch3",
+  "status": "dimensioned"
+ },
+ "12": {
+  "dimension": {
+   "name": "D4@Sketch4@bracket_dimensioned.Part",
+   "segments": [
+    1
+   ],
+   "type": "diameter",
+   "value_si": 0.00845
+  },
+  "face_index": 12,
+  "face_kind": "cylinder",
+  "feature": "Cut-Extrude1",
+  "position_dimensions": [
+   {
+    "external": 1,
+    "name": "D5@Sketch4@bracket_dimensioned.Part",
+    "points": [
+     {
+      "center_of": 1,
+      "x": 0.025,
+      "y": -0.025
+     }
+    ],
+    "segments": [],
+    "type": "horizontal",
+    "value_si": 0.025
+   },
+   {
+    "external": 1,
+    "name": "D6@Sketch4@bracket_dimensioned.Part",
+    "points": [
+     {
+      "center_of": 1,
+      "x": 0.025,
+      "y": -0.025
+     }
+    ],
+    "segments": [],
+    "type": "vertical",
+    "value_si": 0.025
+   }
+  ],
+  "role": "cylinder_wall",
+  "segment": {
+   "construction": false,
+   "cx": 0.025,
+   "cy": -0.025,
+   "index": 1,
+   "kind": "arc/circle",
+   "radius": 0.004225
+  },
+  "sketch": "Sketch4",
+  "status": "dimensioned"
+ },
+ "13": {
+  "dimension": {
+   "name": "D1@Sketch4@bracket_dimensioned.Part",
+   "segments": [
+    0
+   ],
+   "type": "diameter",
+   "value_si": 0.00845
+  },
+  "face_index": 13,
+  "face_kind": "cylinder",
+  "feature": "Cut-Extrude1",
+  "position_dimensions": [
+   {
+    "external": 1,
+    "name": "D2@Sketch4@bracket_dimensioned.Part",
+    "points": [
+     {
+      "center_of": 0,
+      "x": 0.025,
+      "y": 0.025
+     }
+    ],
+    "segments": [],
+    "type": "horizontal",
+    "value_si": 0.025
+   },
+   {
+    "external": 1,
+    "name": "D3@Sketch4@bracket_dimensioned.Part",
+    "points": [
+     {
+      "center_of": 0,
+      "x": 0.025,
+      "y": 0.025
+     }
+    ],
+    "segments": [],
+    "type": "vertical",
+    "value_si": 0.025
+   }
+  ],
+  "role": "cylinder_wall",
+  "segment": {
+   "construction": false,
+   "cx": 0.025,
+   "cy": 0.025,
+   "index": 0,
+   "kind": "arc/circle",
+   "radius": 0.004225
+  },
+  "sketch": "Sketch4",
+  "status": "dimensioned"
+ }
+}

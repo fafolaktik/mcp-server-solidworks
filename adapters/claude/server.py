@@ -18,6 +18,7 @@ from response_mapper import map_response
 from adapter_log import write as _log
 from config import CADCRITIC_EXE, CADCRITIC_TIMEOUT
 import contract_check
+import face_dimension
 # NOTE: pycompiler is reached via `from ir_execution_port import run_feature_graph` imported
 # LAZILY inside rebuild_from_ir and submit_feature_graph — a missing compiler tree degrades to a
 # clean tool error instead of killing the whole MCP server at startup.
@@ -431,14 +432,16 @@ def add_sketch_constraint(
     px2: float = 0.0,
     py2: float = 0.0,
     entity_type1: Literal["SKETCHSEGMENT", "SKETCHPOINT"] = "SKETCHSEGMENT",
-    entity_type2: Literal["SKETCHSEGMENT", "SKETCHPOINT"] = "SKETCHSEGMENT",
+    entity_type2: Literal["SKETCHSEGMENT", "SKETCHPOINT", "ORIGIN"] = "SKETCHSEGMENT",
 ) -> str:
     """Apply a geometric constraint to sketch entities in the active sketch.
     constraint_type: 'horizontal', 'vertical' — single entity (px1, py1 only).
     constraint_type: 'coincident', 'parallel', 'perpendicular', 'tangent', 'equal', 'midpoint' — requires two entities (px2, py2).
     px1/py1: point on the first entity. px2/py2: point on the second entity (two-entity constraints).
     entity_type1/2: 'SKETCHSEGMENT' (default) or 'SKETCHPOINT' for point-based constraints like coincident/midpoint.
-    All coordinates in document units (meters)."""
+    entity_type2='ORIGIN': the second entity is the sketch origin (px2/py2 ignored) — e.g.
+        coincident(corner SKETCHPOINT, ORIGIN) to fix a profile in place.
+    All coordinates in meters, in the SKETCH frame (see add_dimension)."""
     return _call(
         "add_sketch_constraint",
         {
@@ -455,16 +458,44 @@ def add_sketch_constraint(
 # Tool: add_dimension
 # ---------------------------------------------------------------------------
 @mcp.tool(structured_output=False)
-def add_dimension(px: float, py: float, value: Annotated[float, Field(gt=0, description="Dimension value in METERS (e.g. 0.05 = 50mm)")], label_offset_x: float = 0.0, label_offset_y: float = -0.015) -> str:
-    """Apply a smart dimension to the sketch segment nearest to point (px, py).
-    px/py should be on or very near the target segment — e.g. the midpoint of a line.
-    label_offset_x/y control where the dimension label is placed relative to the segment point.
-    Works for any sketch geometry (rectangles, polygons, complex profiles)."""
-    return _call(
-        "add_dimension",
-        {"px": px, "py": py, "value": value, "label_offset_x": label_offset_x,
-            "label_offset_y": label_offset_y},
-    )
+def add_dimension(
+    px: float,
+    py: float,
+    value: Annotated[float, Field(gt=0, description="Dimension value in METERS (e.g. 0.05 = 50mm)")],
+    label_offset_x: float = 0.0,
+    label_offset_y: float = -0.015,
+    sketch_name: str = "",
+    entity_type: Literal["segment", "point"] = "segment",
+    to_origin: bool = False,
+    orientation: Literal["auto", "horizontal", "vertical"] = "auto",
+) -> str:
+    """Add a driving dimension in a sketch and set it to `value`.
+
+    SKETCH FRAME — px/py (and label_offset_x/y) are 2D coordinates in the sketch's own frame: the
+    frame add_sketch_entity draws in and analyze_model(analysis_type='sketch') reports segments in
+    (origin + xdir/ydir = the `frame` create_sketch echoes / analyze_model(sketch).plane.frame).
+    Pass analyze_model(sketch)'s numbers straight through — e.g. a circle {cx, cy, radius} is
+    dimensioned with px=cx+radius, py=cy. Never pre-convert to model XYZ.
+    Selection: the sketch entity nearest (px, py) — entity_type='segment' (default: a line ->
+        its length, a circle -> its diameter) or 'point' (e.g. a circle's center at (cx, cy)).
+    to_origin=True: dimension the picked entity to the SKETCH ORIGIN (a position dimension);
+        orientation 'horizontal' / 'vertical' measures along the sketch x / y axis
+        (orientation requires to_origin; 'auto' lets SolidWorks choose from the label position).
+    sketch_name: dimension an EXISTING sketch — it is opened, dimensioned, closed and the model
+        rebuilt. Blank = the active sketch (normal build flow; it stays open).
+    Returns COMPLETED with result_geometry {dimension (full name — pass it to modify_dimension),
+        short_name (e.g. 'D1@Sketch3'), sketch, type, requested, effective}."""
+    params = {"px": px, "py": py, "value": value, "label_offset_x": label_offset_x,
+              "label_offset_y": label_offset_y}
+    if sketch_name:
+        params["sketch_name"] = sketch_name
+    if entity_type != "segment":
+        params["entity_type"] = entity_type
+    if to_origin:
+        params["to_origin"] = True
+    if orientation != "auto":
+        params["orientation"] = orientation
+    return _call("add_dimension", params)
 
 
 # ---------------------------------------------------------------------------
@@ -2589,6 +2620,19 @@ def compare_assemblies(doc_a: str, doc_b: str) -> str:
 # ---------------------------------------------------------------------------
 # Tool: check_contract  (adapter-only — design-contract check via the cadcritic CLI)
 # ---------------------------------------------------------------------------
+def _nearest_face(point_m: list):
+    """analyze_model(faces, near=point_m, k=1) -> that face dict, or None on any failure (the
+    caller then keeps the feature `multiple` — a failed lookup never resolves a tie)."""
+    try:
+        items = _analysis_items(_call_raw("analyze_model", {
+            "analysis_type": "faces", "name": "", "near": json.dumps(point_m), "k": 1}))
+        found = json.loads(items[0]).get("faces", []) if items else []
+    except (RuntimeError, ValueError, TypeError) as ex:
+        _log(f"!! check_contract near lookup failed: {ex}")
+        return None
+    return found[0] if found else None
+
+
 @mcp.tool(structured_output=False)
 def check_contract(contract_path: str) -> str:
     """Check the ACTIVE part against a cadcritic design contract and point each residual at a face.
@@ -2597,7 +2641,8 @@ def check_contract(contract_path: str) -> str:
     a separate process), and maps every feature cadcritic reports onto analyze_model('faces')
     indices by geometry: same type (plane / cylinder), parallel normal or axis, same radius, and
     same plane or axis line — all within 1e-5 (metres for lengths). Several faces passing →
-    the one whose area equals cadcritic's (planes only; cadcritic gives holes/bosses no area).
+    the one whose area equals cadcritic's (planes only; cadcritic gives holes/bosses no area),
+    then the one analyze_model(faces, near=<cadcritic centroid>, k=1) returns, if unambiguous.
 
     contract_path: absolute path of the contract JSON (keep-out paths in it resolve relative to
         the contract's folder).
@@ -2650,7 +2695,7 @@ def check_contract(contract_path: str) -> str:
         if failure:
             _log(f"!! check_contract {failure}")
             return failure
-        result = contract_check.annotate_report(report, faces)
+        result = contract_check.annotate_report(report, faces, _nearest_face)
         fm = result["face_mapping"]
         _log(f"<- check_contract score={result['score']} matched={fm['matched']}/{fm['features']} "
              f"unmatched={[e['id'] for e in fm['unmatched']]} "
@@ -2658,6 +2703,66 @@ def check_contract(contract_path: str) -> str:
         return json.dumps(result, indent=2, sort_keys=True)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+# ---------------------------------------------------------------------------
+# Tool: dimension_for_face  (adapter-only — face index -> its driving sketch dimension)
+# ---------------------------------------------------------------------------
+@mcp.tool(structured_output=False)
+def dimension_for_face(face_index: int, add_if_missing: bool = False) -> str:
+    """Find the driving dimension behind ONE face of the active part — the step between a residual's
+    face_index (check_contract) and modify_dimension.
+
+    Walks feature_map to the feature that CREATED the face, takes that feature's profile sketch,
+    finds the sketch segment the face was swept from (a cylinder -> the circle/arc with the same
+    radius on its axis; a side wall -> the line lying in its plane; a cap parallel to the sketch ->
+    the extrude's depth), and returns the dimension SolidWorks reports as ATTACHED to that segment.
+    face_index: from analyze_model(faces) / check_contract's face_index.
+    add_if_missing: when the segment has no driving dimension, add one at the segment's CURRENT size
+        (geometry unchanged) and return its name (status 'added').
+    Returns JSON: status ('dimensioned' | 'undimensioned' | 'added' | 'not_dimension_driven' |
+    'multiple_dimensions' | 'ambiguous_feature' | 'ambiguous_segment' | 'unattributed' |
+    'no_segment' | 'no_profile_sketch' | 'unsupported'), feature, sketch, segment (sketch frame),
+    dimension {name (pass to modify_dimension), value_si, type}, position_dimensions for a circle.
+    Anything that does not resolve to exactly one candidate is reported, never guessed.
+    Read-only unless add_if_missing adds a dimension. feature_map rebuilds the tree step by step,
+    so this takes a few seconds on large parts."""
+    try:
+        items = _analysis_items(_call_raw("analyze_model", {"analysis_type": "faces", "name": ""}))
+        faces = json.loads(items[0]).get("faces", []) if items else []
+        face = next((f for f in faces if f.get("i") == face_index), None)
+        if face is None:
+            return f"FAILED | FACE_NOT_FOUND | no face {face_index} (part has {len(faces)} faces)"
+        fmap = json.loads(_analysis_items(_call_raw("analyze_model", {
+            "analysis_type": "feature_map", "name": ""}))[0])
+        recipe = json.loads(_analysis_items(_call_raw("analyze_model", {
+            "analysis_type": "features", "name": ""}))[0])
+    except (RuntimeError, ValueError, TypeError, IndexError) as ex:
+        return f"FAILED | ANALYZE_FAILED | {ex}"
+
+    def read_sketch(name):
+        return json.loads(_analysis_items(_call_raw("analyze_model", {
+            "analysis_type": "sketch", "name": name}))[0])
+
+    try:
+        result = face_dimension.resolve(face, fmap, recipe, read_sketch, faces)
+    except (RuntimeError, ValueError, TypeError, IndexError) as ex:
+        return f"FAILED | ANALYZE_FAILED | {ex}"
+
+    if result["status"] == "undimensioned" and add_if_missing and "add_dimension" in result:
+        params = dict(result["add_dimension"], sketch_name=result["sketch"])
+        added = _call_raw("add_dimension", params)
+        if added.get("status") != "COMPLETED":
+            err = added.get("error") or {}
+            result["add_error"] = f"{err.get('code')}: {err.get('message')}"
+        else:
+            geo = added.get("result_geometry") or {}
+            result["status"] = "added"
+            result["dimension"] = {"name": geo.get("dimension"), "short_name": geo.get("short_name"),
+                                   "value_si": geo.get("effective"), "type": geo.get("type")}
+    _log(f"<- dimension_for_face face={face_index} status={result['status']} "
+         f"feature={result.get('feature')} dim={(result.get('dimension') or {}).get('name')}")
+    return json.dumps(result, indent=2, sort_keys=True)
 
 
 # ---------------------------------------------------------------------------

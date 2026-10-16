@@ -16,10 +16,13 @@ analyze_model reports no inside/outside sense for a cylinder, so hole and boss b
 
 Tie-break: when several faces pass the geometric test and cadcritic reports the feature's
 `area` (plane descriptors only — SPEC 9.1 gives hole/boss no area), keep the faces whose area
-agrees within AREA_TOL_M2. analyze_model cannot say whether a point lies ON a face (it reports
-one representative point per face, no boundary), so there is no centroid-containment test.
-Exactly one face left -> face_index. Zero or several -> face_index null with the reason and
-the candidate indices. Never a guess.
+agrees within AREA_TOL_M2. If area cannot separate them, ask SolidWorks for the face nearest
+cadcritic's centroid (analyze_model(faces, near=centroid_m, k=1)); it decides only when it is a
+remaining candidate and no other candidate is equally near. NOTE: `near` measures distance to
+each face's representative (UV-mid) point — a proximity ranking, not a point-on-face test
+(analyze_model exposes no face boundary). Exactly one face left -> face_index, tagged
+`resolved_by: area|near`. Zero or several -> face_index null with the reason and the candidate
+indices. Never a guess.
 
 Precision note: analyze_model rounds to 6 decimals in SI units — <= 5e-7 m per coordinate and
 <= 5e-7 m2 per area (i.e. areas are only known to ~1 mm2).
@@ -174,8 +177,11 @@ def _cylinder_matches(desc: dict, to_m: float, face: dict) -> bool:
     return _cross_norm(_sub(o_sw, _scale(c_cc, to_m)), a_cc) <= LINEAR_TOL_M
 
 
-def match_descriptor(desc: dict, faces: list, report_unit: str) -> dict:
-    """{'status': matched|unmatched|multiple, 'candidates': [...], 'reason'?: str}."""
+def match_descriptor(desc: dict, faces: list, report_unit: str, near_lookup=None) -> dict:
+    """{'status': matched|unmatched|multiple, 'candidates': [...], 'reason'?: str}.
+
+    near_lookup(point_m) -> the analyze_model(faces, near=point_m, k=1) face dict (or None):
+    the last tie-break, used only when the geometric test and area leave several faces."""
     ftype = desc.get("type")
     unit = _length_unit(desc, report_unit)
     if unit not in _UNIT_TO_M:
@@ -196,7 +202,44 @@ def match_descriptor(desc: dict, faces: list, report_unit: str) -> dict:
     if not candidates:
         return {"status": "unmatched", "candidates": [],
                 "reason": "no analyze_model face within tolerance"}
-    return _break_tie_by_area(desc, to_m, hits)
+    m = _break_tie_by_area(desc, to_m, hits)
+    if m["status"] == "multiple" and near_lookup is not None:
+        m = _break_tie_by_near(desc, to_m, hits, m, near_lookup)
+    return m
+
+
+def _break_tie_by_near(desc: dict, to_m: float, hits: list, area_result: dict, near_lookup) -> dict:
+    """Area left several faces: ask SolidWorks for the face nearest cadcritic's centroid
+    (analyze_model(faces, near=..., k=1) — distance to each face's representative point).
+    Resolved only when that face is one of the remaining candidates AND no other remaining
+    candidate is within LINEAR_TOL_M of the same distance (a tie k=1 alone would hide)."""
+    remaining = area_result["candidates"]
+    centroid = _vec(desc.get("centroid"))
+    if centroid is None:
+        return dict(area_result, reason=area_result["reason"] + "; no centroid for a near query")
+    query = [round(c * to_m, 9) for c in centroid]
+    nearest = near_lookup(query)
+    if not isinstance(nearest, dict) or nearest.get("i") not in remaining:
+        got = nearest.get("i") if isinstance(nearest, dict) else None
+        return dict(area_result, reason=area_result["reason"]
+                    + f"; nearest face to the centroid is {got}, not a candidate")
+    best = nearest["i"]
+    pts = {f["i"]: _vec(f.get("point")) for f in hits}
+    dist = {i: math.dist(p, query) for i, p in pts.items() if p is not None and i in remaining}
+    if best not in dist:
+        return dict(area_result, reason=area_result["reason"] + "; nearest face has no point")
+    rivals = [i for i in remaining if i != best and i in dist
+              and abs(dist[i] - dist[best]) <= LINEAR_TOL_M]
+    near_info = {"query_m": query, "face": best, "dist_m": round(dist[best], 9)}
+    if rivals:
+        return dict(area_result, reason=area_result["reason"]
+                    + f"; faces {sorted([best] + rivals)} are equally near the centroid",
+                    near=near_info)
+    out = {"status": "matched", "candidates": [best], "resolved_by": "near",
+           "geometric_candidates": [f["i"] for f in hits], "near": near_info}
+    if desc.get("area") is not None:
+        out["area_result"] = area_result["reason"]
+    return out
 
 
 def _break_tie_by_area(desc: dict, to_m: float, hits: list) -> dict:
@@ -229,10 +272,11 @@ def _descriptor_lists(requirement: dict):
         yield err.get("matched") or []
 
 
-def annotate_report(report: dict, faces: list) -> dict:
+def annotate_report(report: dict, faces: list, near_lookup=None) -> dict:
     """Return a copy of cadcritic's check report with `face_index` (+ `face_match`) on every
     feature descriptor, a top-level `score` = [error_count, violation_score] (SPEC 9.2's
-    comparison key) and a `face_mapping` summary listing every unresolved feature by id."""
+    comparison key) and a `face_mapping` summary listing every unresolved feature by id.
+    near_lookup: see match_descriptor (None = no near tie-break)."""
     out = json.loads(json.dumps(report))
     report_unit = (out.get("units") or {}).get("length", "mm")
     resolved: dict = {}      # feature id -> match result (identical for every occurrence)
@@ -242,7 +286,7 @@ def annotate_report(report: dict, faces: list) -> dict:
             for desc in descriptors:
                 fid = desc.get("id")
                 if fid not in resolved:
-                    resolved[fid] = match_descriptor(desc, faces, report_unit)
+                    resolved[fid] = match_descriptor(desc, faces, report_unit, near_lookup)
                 m = resolved[fid]
                 desc["face_index"] = m["candidates"][0] if m["status"] == "matched" else None
                 desc["face_match"] = dict(m)

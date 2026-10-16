@@ -657,6 +657,13 @@ namespace SolidworksExecution.Services
                 double? value = p?.Value<double?>("value");
                 double labelOffsetX = p?.Value<double?>("label_offset_x") ?? 0.0;
                 double labelOffsetY = p?.Value<double?>("label_offset_y") ?? -0.015;
+                // Optional (2026-10): dimension an EXISTING sketch (opened here, closed + rebuilt after),
+                // pick a sketch POINT instead of a segment, and dimension point-to-ORIGIN with an
+                // explicit sketch-axis orientation (AddSpecificDimension — no placement heuristics).
+                string sketchName = p?.Value<string>("sketch_name") ?? "";
+                string entityType = (p?.Value<string>("entity_type") ?? "segment").ToLowerInvariant();
+                bool toOrigin = p?.Value<bool?>("to_origin") ?? false;
+                string orientation = (p?.Value<string>("orientation") ?? "auto").ToLowerInvariant();
 
                 if (px == null)
                     return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
@@ -673,12 +680,48 @@ namespace SolidworksExecution.Services
                     return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
                         "NO_ACTIVE_DOCUMENT", "No active document found in SolidWorks.");
 
+                if (entityType != "segment" && entityType != "point")
+                    return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
+                        "INVALID_PARAMETER", "entity_type must be 'segment' or 'point'.");
+                if (orientation != "auto" && orientation != "horizontal" && orientation != "vertical")
+                    return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
+                        "INVALID_PARAMETER", "orientation must be 'auto', 'horizontal' or 'vertical'.");
+                if (orientation != "auto" && !toOrigin)
+                    return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
+                        "INVALID_PARAMETER", "orientation applies to a two-entity dimension: pass to_origin=true.");
+
                 var activeSketch = modelDoc.SketchManager.ActiveSketch;
+                bool openedHere = false;
+                if (!string.IsNullOrEmpty(sketchName)
+                    && (activeSketch == null || !string.Equals((activeSketch as IFeature)?.Name, sketchName, StringComparison.Ordinal)))
+                {
+                    if (activeSketch != null) modelDoc.SketchManager.InsertSketch(true);
+                    modelDoc.ClearSelection2(true);
+                    if (!modelDoc.Extension.SelectByID2(sketchName, "SKETCH", 0, 0, 0, false, 0, null, 0))
+                        return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
+                            "SKETCH_NOT_FOUND", $"No sketch named '{sketchName}'.");
+                    modelDoc.EditSketch();
+                    activeSketch = modelDoc.SketchManager.ActiveSketch;
+                    openedHere = activeSketch != null;
+                }
                 if (activeSketch == null)
                     return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
-                        "SKETCH_NOT_ACTIVE", "No active sketch. Call create_sketch first.");
+                        "SKETCH_NOT_ACTIVE", "No active sketch. Call create_sketch first (or pass sketch_name).");
 
                 string activeSketchName = (activeSketch as IFeature)?.Name ?? "Sketch";
+
+                // px/py and the label offsets are SKETCH coordinates — the frame add_sketch_entity draws
+                // in and analyze_model(sketch) reports. SelectByID2/AddDimension2 take MODEL coordinates,
+                // so map through the sketch transform (they used to receive the sketch numbers with z=0,
+                // which only coincides with model space on a sketch whose frame IS the model XY plane).
+                double[] pick = SketchToModel(activeSketch, px.Value, py.Value);
+                double[] label = SketchToModel(activeSketch, px.Value + labelOffsetX, py.Value + labelOffsetY);
+                if (pick == null || label == null)
+                {
+                    if (openedHere) modelDoc.SketchManager.InsertSketch(true);
+                    return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
+                        "TRANSFORM_FAILED", "Could not map sketch coordinates to model space.");
+                }
 
                 // Force SolidWorks to commit and refresh sketch geometry before attempting selection.
                 // Without this, segments created by add_rectangle may not yet be queryable via SelectByID2.
@@ -691,35 +734,79 @@ namespace SolidworksExecution.Services
                 _solidWorks.SetUserPreferenceToggle(
                     (int)swUserPreferenceToggle_e.swInputDimValOnCreate, false);
 
-                // SelectByID2 with coordinates selects the nearest segment — robust for any sketch geometry
+                // SelectByID2 with coordinates selects the nearest entity of the type — robust for any sketch geometry
+                string selType = entityType == "point" ? "SKETCHPOINT" : "SKETCHSEGMENT";
                 bool selected = modelDoc.Extension.SelectByID2(
-                    "", "SKETCHSEGMENT", px.Value, py.Value, 0, false, 0, null, 0);
+                    "", selType, pick[0], pick[1], pick[2], false, 0, null, 0);
+                if (selected && toOrigin)
+                    selected = modelDoc.Extension.SelectByID2(
+                        "Point1@Origin", "EXTSKETCHPOINT", 0, 0, 0, true, 0, null, 0);
 
                 if (!selected)
                 {
                     _solidWorks.SetUserPreferenceToggle(
                         (int)swUserPreferenceToggle_e.swInputDimValOnCreate, prevInputDimVal);
+                    if (openedHere) modelDoc.SketchManager.InsertSketch(true);
                     return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
-                        "SEGMENT_NOT_FOUND", $"No sketch segment found at or near ({px.Value}, {py.Value}).");
+                        entityType == "point" ? "POINT_NOT_FOUND" : "SEGMENT_NOT_FOUND",
+                        $"No sketch {entityType} found at or near sketch ({px.Value}, {py.Value})"
+                        + (toOrigin ? " (or the sketch origin could not be selected)." : "."));
                 }
 
-                var dim = modelDoc.AddDimension2(px.Value + labelOffsetX, py.Value + labelOffsetY, 0) as IDisplayDimension;
+                IDisplayDimension dim;
+                if (orientation == "auto")
+                {
+                    dim = modelDoc.AddDimension2(label[0], label[1], label[2]) as IDisplayDimension;
+                }
+                else
+                {
+                    // swDimensionType_e inlined (ADR-018): 11 = swHorLinearDimension, 12 = swVertLinearDimension.
+                    // Horizontal/vertical are relative to the SKETCH axes.
+                    int dimErr = 0;
+                    dim = modelDoc.Extension.AddSpecificDimension(label[0], label[1], label[2],
+                        orientation == "horizontal" ? 11 : 12, ref dimErr) as IDisplayDimension;
+                    if (dim == null) ExecLog.Write($"add_dimension: AddSpecificDimension error={dimErr}");
+                }
 
                 // Restore preference regardless of outcome
                 _solidWorks.SetUserPreferenceToggle(
                     (int)swUserPreferenceToggle_e.swInputDimValOnCreate, prevInputDimVal);
 
                 if (dim == null)
+                {
+                    if (openedHere) modelDoc.SketchManager.InsertSketch(true);
                     return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
-                        "DIMENSION_CREATION_FAILED", "AddDimension2 returned null.");
+                        "DIMENSION_CREATION_FAILED", "SolidWorks returned no dimension for the selection.");
+                }
 
                 // Drive the dimension to the requested value
                 var swDim = dim.GetDimension2(0) as SolidWorks.Interop.sldworks.IDimension;
                 if (swDim != null)
                     swDim.SystemValue = value.Value;
 
+                // The created dimension's names, so callers never infer them: FullName is the form
+                // analyze_model(features) reports and modify_dimension accepts; short = 'D1@Sketch3'.
+                string fullName = swDim?.FullName ?? "";
+                string shortName = swDim != null ? $"{swDim.Name}@{activeSketchName}" : "";
+                double effective = value.Value;
+                try
+                {
+                    var sv = swDim?.GetSystemValue3(1, null) as double[];   // 1 = swThisConfiguration
+                    if (sv != null && sv.Length > 0) effective = sv[0];
+                }
+                catch { }
+                int dimType = 0;
+                try { dimType = dim.Type2; } catch { }
+
+                if (openedHere)
+                {
+                    modelDoc.SketchManager.InsertSketch(true);
+                    modelDoc.EditRebuild3();
+                }
+                ExecLog.Write($"add_dimension: {fullName} type={dimType} value={effective} sketch={activeSketchName} opened_here={openedHere}");
+
                 var existingDims = new List<string>();
-                existingDims.Add($"px={px.Value},py={py.Value},value={value.Value}");
+                if (!string.IsNullOrEmpty(fullName)) existingDims.Add(fullName);
 
                 var response = new ExecutionResponse
                 {
@@ -732,9 +819,18 @@ namespace SolidworksExecution.Services
                         StateVersion = _guard.GetCurrentStateVersion() + 1,
                         ActiveDocument = modelDoc.GetTitle(),
                         DocumentType = "PART",
-                        ActiveSketch = activeSketchName,
+                        ActiveSketch = openedHere ? null : activeSketchName,
                         Features = new List<string>(),
                         Dimensions = existingDims
+                    },
+                    ResultGeometry = new JObject
+                    {
+                        ["dimension"] = fullName,
+                        ["short_name"] = shortName,
+                        ["sketch"] = activeSketchName,
+                        ["type"] = DimTypeName(dimType),
+                        ["requested"] = value.Value,
+                        ["effective"] = R6(effective),
                     },
                     Error = null
                 };
@@ -751,6 +847,39 @@ namespace SolidworksExecution.Services
             {
                 return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
                     "UNEXPECTED_ERROR", ex.Message);
+            }
+        }
+
+        // SKETCH frame → MODEL space. The sketch frame is the one add_sketch_entity draws in and
+        // analyze_model(sketch) reports (ISketchPoint.X/Y): origin + xdir/ydir as echoed by create_sketch
+        // and analyze_model(sketch).plane.frame. Selection/annotation APIs (SelectByID2, AddDimension2,
+        // AddSpecificDimension) take MODEL coordinates. Returns {x,y,z} in meters, or null.
+        private double[] SketchToModel(ISketch sketch, double u, double v)
+        {
+            try
+            {
+                var s2m = sketch?.ModelToSketchTransform?.IInverse();
+                var mu = _solidWorks.GetMathUtility() as IMathUtility;
+                if (s2m == null || mu == null) return null;
+                var pt = mu.CreatePoint(new double[] { u, v, 0.0 }) as IMathPoint;
+                pt = pt?.MultiplyTransform(s2m) as IMathPoint;
+                return pt?.ArrayData as double[];
+            }
+            catch (Exception ex) { ExecLog.Write($"SketchToModel err: {ex.Message}"); return null; }
+        }
+
+        // swDimensionType_e as stable lowercase names (ints inlined, ADR-018 — no swconst at runtime).
+        private static string DimTypeName(int t)
+        {
+            switch (t)
+            {
+                case 2: return "linear";
+                case 3: return "angular";
+                case 5: return "radial";
+                case 6: return "diameter";
+                case 11: return "horizontal";
+                case 12: return "vertical";
+                default: return "type_" + t;
             }
         }
 
@@ -817,15 +946,28 @@ namespace SolidworksExecution.Services
                     return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
                         "MISSING_PARAMETER", $"constraint_type '{constraintType}' requires px2 and py2 (point on the second entity).");
 
+                // Sketch coordinates → model (same convention and fix as add_dimension).
+                var sk = modelDoc.SketchManager.ActiveSketch;
+                double[] m1 = SketchToModel(sk, px1.Value, py1.Value);
+                // entity_type2='ORIGIN': the second entity is the sketch origin (px2/py2 ignored) —
+                // e.g. coincident(corner point, origin) to fix a profile in place.
+                bool secondIsOrigin = string.Equals(entityType2, "ORIGIN", StringComparison.OrdinalIgnoreCase);
+                double[] m2 = needsTwoEntities && !secondIsOrigin ? SketchToModel(sk, px2.Value, py2.Value) : null;
+                if (m1 == null || (needsTwoEntities && !secondIsOrigin && m2 == null))
+                    return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
+                        "TRANSFORM_FAILED", "Could not map sketch coordinates to model space.");
+
                 modelDoc.ClearSelection2(true);
-                bool sel1 = modelDoc.Extension.SelectByID2("", entityType1, px1.Value, py1.Value, 0, false, 0, null, 0);
+                bool sel1 = modelDoc.Extension.SelectByID2("", entityType1, m1[0], m1[1], m1[2], false, 0, null, 0);
                 if (!sel1)
                     return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
                         "ENTITY_NOT_FOUND", $"No {entityType1} found at or near ({px1.Value}, {py1.Value}).");
 
                 if (needsTwoEntities)
                 {
-                    bool sel2 = modelDoc.Extension.SelectByID2("", entityType2, px2.Value, py2.Value, 0, true, 0, null, 0);
+                    bool sel2 = secondIsOrigin
+                        ? modelDoc.Extension.SelectByID2("Point1@Origin", "EXTSKETCHPOINT", 0, 0, 0, true, 0, null, 0)
+                        : modelDoc.Extension.SelectByID2("", entityType2, m2[0], m2[1], m2[2], true, 0, null, 0);
                     if (!sel2)
                         return BuildFailed(request.OperationId, _guard.GetCurrentStateVersion(),
                             "ENTITY_NOT_FOUND", $"No {entityType2} found at or near ({px2.Value}, {py2.Value}).");

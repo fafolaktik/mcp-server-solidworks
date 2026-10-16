@@ -1,0 +1,144 @@
+{
+ "sketch": "Sketch3",
+ "segment_index": 1,
+ "sketch_before": {
+  "operationId": "8893b470-cace-4747-9281-79b90b17175f",
+  "status": "COMPLETED",
+  "verified": true,
+  "stateVersion": 3,
+  "cadState": {
+   "stateVersion": 3,
+   "activeDocument": "bracket_wrong_hole_proof.SLDPRT",
+   "documentType": "PART",
+   "features": [
+    "{\"name\":\"Sketch3\",\"sketch\":{\"counts\":{\"arc_circle\":2},\"segments\":[{\"construction\":false,\"kind\":\"arc/circle\",\"cx\":0.025,\"cy\":0.025,\"radius\":0.004225},{\"construction\":false,\"kind\":\"arc/circle\",\"cx\":0.025,\"cy\":-0.025,\"radius\":0.0045}]},\"dimensions\":[],\"plane\":{\"frame\":{\"origin\":[0.0,0.0,0.0],\"xdir\":[0.0,1.0,0.0],\"ydir\":[-1.0,0.0,0.0]},\"ref\":\"Front Plane\"}}"
+   ],
+   "dimensions": []
+  }
+ },
+ "add_dimension": [
+  {
+   "tool": "add_dimension",
+   "params": {
+    "px": 0.029500000000000002,
+    "py": -0.025,
+    "value": 0.009,
+    "label_offset_x": 0.004,
+    "label_offset_y": 0.004,
+    "sketch_name": "Sketch3"
+   },
+   "response": {
+    "operationId": "b9928727-10e4-40e0-b6bf-f70bee1327b8",
+    "status": "COMPLETED",
+    "verified": true,
+    "stateVersion": 4,
+    "cadState": {
+     "stateVersion": 4,
+     "activeDocument": "bracket_wrong_hole_proof.SLDPRT",
+     "documentType": "PART",
+     "features": [],
+     "dimensions": [
+      "D1@Sketch3@bracket_wrong_hole_proof.Part"
+     ]
+    },
+    "result_geometry": {
+     "dimension": "D1@Sketch3@bracket_wrong_hole_proof.Part",
+     "short_name": "D1@Sketch3",
+     "sketch": "Sketch3",
+     "type": "diameter",
+     "requested": 0.009,
+     "effective": 0.009
+    }
+   }
+  },
+  {
+   "tool": "add_dimension",
+   "params": {
+    "px": 0.025,
+    "py": -0.025,
+    "value": 0.025,
+    "label_offset_x": 0.0,
+    "label_offset_y": 0.01,
+    "sketch_name": "Sketch3",
+    "entity_type": "point",
+    "to_origin": true,
+    "orientation": "horizontal"
+   },
+   "response": {
+    "operationId": "78d27ae0-2e1a-49b3-8f2d-1c32282df7db",
+    "status": "COMPLETED",
+    "verified": true,
+    "stateVersion": 5,
+    "cadState": {
+     "stateVersion": 5,
+     "activeDocument": "bracket_wrong_hole_proof.SLDPRT",
+     "documentType": "PART",
+     "features": [],
+     "dimensions": [
+      "D2@Sketch3@bracket_wrong_hole_proof.Part"
+     ]
+    },
+    "result_geometry": {
+     "dimension": "D2@Sketch3@bracket_wrong_hole_proof.Part",
+     "short_name": "D2@Sketch3",
+     "sketch": "Sketch3",
+     "type": "horizontal",
+     "requested": 0.025,
+     "effective": 0.025
+    }
+   }
+  },
+  {
+   "tool": "add_dimension",
+   "params": {
+    "px": 0.025,
+    "py": -0.025,
+    "value": 0.025,
+    "label_offset_x": 0.01,
+    "label_offset_y": -0.015,
+    "sketch_name": "Sketch3",
+    "entity_type": "point",
+    "to_origin": true,
+    "orientation": "vertical"
+   },
+   "response": {
+    "operationId": "68d4c214-1f6f-4341-834c-afda55da34ee",
+    "status": "COMPLETED",
+    "verified": true,
+    "stateVersion": 6,
+    "cadState": {
+     "stateVersion": 6,
+     "activeDocument": "bracket_wrong_hole_proof.SLDPRT",
+     "documentType": "PART",
+     "features": [],
+     "dimensions": [
+      "D3@Sketch3@bracket_wrong_hole_proof.Part"
+     ]
+    },
+    "result_geometry": {
+     "dimension": "D3@Sketch3@bracket_wrong_hole_proof.Part",
+     "short_name": "D3@Sketch3",
+     "sketch": "Sketch3",
+     "type": "vertical",
+     "requested": 0.025,
+     "effective": 0.025
+    }
+   }
+  }
+ ],
+ "sketch_after": {
+  "operationId": "a27dccdc-ecd1-41bd-9543-7a042fc6088a",
+  "status": "COMPLETED",
+  "verified": true,
+  "stateVersion": 6,
+  "cadState": {
+   "stateVersion": 6,
+   "activeDocument": "bracket_wrong_hole_proof.SLDPRT",
+   "documentType": "PART",
+   "features": [
+    "{\"name\":\"Sketch3\",\"sketch\":{\"counts\":{\"arc_circle\":2},\"segments\":[{\"construction\":false,\"kind\":\"arc/circle\",\"cx\":0.025,\"cy\":0.025,\"radius\":0.004225},{\"construction\":false,\"kind\":\"arc/circle\",\"cx\":0.025,\"cy\":-0.025,\"radius\":0.0045}]},\"dimensions\":[{\"name\":\"D1@Sketch3@bracket_wrong_hole_proof.Part\",\"value_si\":0.009,\"type\":\"diameter\",\"segments\":[1]},{\"name\":\"D2@Sketch3@bracket_wrong_hole_proof.Part\",\"value_si\":0.025,\"type\":\"horizontal\",\"segments\":[],\"points\":[{\"x\":0.025,\"y\":-0.025,\"center_of\":1}],\"external\":1},{\"name\":\"D3@Sketch3@bracket_wrong_hole_proof.Part\",\"value_si\":0.025,\"type\":\"vertical\",\"segments\":[],\"points\":[{\"x\":0.025,\"y\":-0.025,\"center_of\":1}],\"external\":1}],\"plane\":{\"frame\":{\"origin\":[0.0,0.0,0.0],\"xdir\":[0.0,1.0,0.0],\"ydir\":[-1.0,0.0,0.0]},\"ref\":\"Front Plane\"}}"
+   ],
+   "dimensions": []
+  }
+ }
+}

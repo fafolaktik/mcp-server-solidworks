@@ -1,0 +1,732 @@
+{
+ "command": "check",
+ "contract": "contract.json",
+ "error_count": 0,
+ "face_mapping": {
+  "features": 8,
+  "matched": 8,
+  "multiple": [],
+  "source": "analyze_model(faces)",
+  "tolerance": {
+   "area_tie_break_m2": 1e-06,
+   "direction_sin": 1e-05,
+   "linear_m": 1e-05
+  },
+  "unmatched": []
+ },
+ "part": "active_part.step",
+ "passed": true,
+ "requirements": [
+  {
+   "details": {},
+   "error": null,
+   "features": [],
+   "id": "R01-base-length",
+   "measured": 80.0,
+   "range": [
+    79.9,
+    80.1
+   ],
+   "residual": 0.0,
+   "scale": 0.2,
+   "status": "pass",
+   "type": "bbox",
+   "unit": "mm",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {},
+   "error": null,
+   "features": [],
+   "id": "R02-height",
+   "measured": 50.0,
+   "range": [
+    49.5,
+    50.5
+   ],
+   "residual": 0.0,
+   "scale": 1.0,
+   "status": "pass",
+   "type": "bbox",
+   "unit": "mm",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {},
+   "error": null,
+   "features": [
+    {
+     "axis": [
+      0.0,
+      0.0,
+      1.0
+     ],
+     "center": [
+      -25.0,
+      25.0,
+      4.0
+     ],
+     "centroid": [
+      -25.0,
+      25.0,
+      4.0
+     ],
+     "face_index": 13,
+     "face_match": {
+      "candidates": [
+       13
+      ],
+      "status": "matched"
+     },
+     "id": "hole:-25.000,25.000,4.000",
+     "length": 8.0,
+     "radius": 4.225,
+     "type": "hole",
+     "units": {
+      "axis": "1",
+      "center": "mm",
+      "centroid": "mm",
+      "length": "mm",
+      "radius": "mm"
+     }
+    }
+   ],
+   "id": "R03-hole-left-diameter",
+   "measured": 8.45,
+   "range": [
+    8.35,
+    8.55
+   ],
+   "residual": 0.0,
+   "scale": 0.2,
+   "status": "pass",
+   "type": "hole_diameter",
+   "unit": "mm",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {},
+   "error": null,
+   "features": [
+    {
+     "axis": [
+      0.0,
+      0.0,
+      1.0
+     ],
+     "center": [
+      25.0,
+      25.0,
+      4.0
+     ],
+     "centroid": [
+      25.0,
+      25.0,
+      4.0
+     ],
+     "face_index": 12,
+     "face_match": {
+      "candidates": [
+       12
+      ],
+      "status": "matched"
+     },
+     "id": "hole:25.000,25.000,4.000",
+     "length": 8.0,
+     "radius": 4.225,
+     "type": "hole",
+     "units": {
+      "axis": "1",
+      "center": "mm",
+      "centroid": "mm",
+      "length": "mm",
+      "radius": "mm"
+     }
+    }
+   ],
+   "id": "R04-hole-right-diameter",
+   "measured": 8.45,
+   "range": [
+    8.35,
+    8.55
+   ],
+   "residual": 0.0,
+   "scale": 0.2,
+   "status": "pass",
+   "type": "hole_diameter",
+   "unit": "mm",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {
+    "order": [
+     "hole:-25.000,25.000,4.000",
+     "hole:25.000,25.000,4.000"
+    ],
+    "spacings": [
+     50.0
+    ],
+    "units": {
+     "spacings": "mm"
+    }
+   },
+   "error": null,
+   "features": [
+    {
+     "axis": [
+      0.0,
+      0.0,
+      1.0
+     ],
+     "center": [
+      -25.0,
+      25.0,
+      4.0
+     ],
+     "centroid": [
+      -25.0,
+      25.0,
+      4.0
+     ],
+     "face_index": 13,
+     "face_match": {
+      "candidates": [
+       13
+      ],
+      "status": "matched"
+     },
+     "id": "hole:-25.000,25.000,4.000",
+     "length": 8.0,
+     "radius": 4.225,
+     "type": "hole",
+     "units": {
+      "axis": "1",
+      "center": "mm",
+      "centroid": "mm",
+      "length": "mm",
+      "radius": "mm"
+     }
+    },
+    {
+     "axis": [
+      0.0,
+      0.0,
+      1.0
+     ],
+     "center": [
+      25.0,
+      25.0,
+      4.0
+     ],
+     "centroid": [
+      25.0,
+      25.0,
+      4.0
+     ],
+     "face_index": 12,
+     "face_match": {
+      "candidates": [
+       12
+      ],
+      "status": "matched"
+     },
+     "id": "hole:25.000,25.000,4.000",
+     "length": 8.0,
+     "radius": 4.225,
+     "type": "hole",
+     "units": {
+      "axis": "1",
+      "center": "mm",
+      "centroid": "mm",
+      "length": "mm",
+      "radius": "mm"
+     }
+    }
+   ],
+   "id": "R05-hole-pitch",
+   "measured": 50.0,
+   "range": [
+    49.9,
+    50.1
+   ],
+   "residual": 0.0,
+   "scale": 0.2,
+   "status": "pass",
+   "type": "hole_spacing",
+   "unit": "mm",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {
+    "center": [
+     -25.0,
+     25.0,
+     4.0
+    ],
+    "offset": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "units": {
+     "center": "mm",
+     "offset": "mm"
+    }
+   },
+   "error": null,
+   "features": [
+    {
+     "axis": [
+      0.0,
+      0.0,
+      1.0
+     ],
+     "center": [
+      -25.0,
+      25.0,
+      4.0
+     ],
+     "centroid": [
+      -25.0,
+      25.0,
+      4.0
+     ],
+     "face_index": 13,
+     "face_match": {
+      "candidates": [
+       13
+      ],
+      "status": "matched"
+     },
+     "id": "hole:-25.000,25.000,4.000",
+     "length": 8.0,
+     "radius": 4.225,
+     "type": "hole",
+     "units": {
+      "axis": "1",
+      "center": "mm",
+      "centroid": "mm",
+      "length": "mm",
+      "radius": "mm"
+     }
+    }
+   ],
+   "id": "R06-hole-left-position",
+   "measured": 0.0,
+   "range": [
+    0.0,
+    0.05
+   ],
+   "residual": 0.0,
+   "scale": 0.05,
+   "status": "pass",
+   "type": "hole_position",
+   "unit": "mm",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {},
+   "error": null,
+   "features": [
+    {
+     "axis": [
+      0.0,
+      0.0,
+      1.0
+     ],
+     "center": [
+      -25.0,
+      25.0,
+      4.0
+     ],
+     "centroid": [
+      -25.0,
+      25.0,
+      4.0
+     ],
+     "face_index": 13,
+     "face_match": {
+      "candidates": [
+       13
+      ],
+      "status": "matched"
+     },
+     "id": "hole:-25.000,25.000,4.000",
+     "length": 8.0,
+     "radius": 4.225,
+     "type": "hole",
+     "units": {
+      "axis": "1",
+      "center": "mm",
+      "centroid": "mm",
+      "length": "mm",
+      "radius": "mm"
+     }
+    }
+   ],
+   "id": "R07-hole-left-axis",
+   "measured": 0.0,
+   "range": [
+    0.0,
+    0.5
+   ],
+   "residual": 0.0,
+   "scale": 0.5,
+   "status": "pass",
+   "type": "hole_axis",
+   "unit": "deg",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {},
+   "error": null,
+   "features": [
+    {
+     "area": 2317.876140340506,
+     "centroid": [
+      1.0460986433145384e-15,
+      22.65302385864292,
+      6.0
+     ],
+     "face_index": 3,
+     "face_match": {
+      "candidates": [
+       3
+      ],
+      "status": "matched"
+     },
+     "id": "plane:0.000,22.653,6.000",
+     "normal": [
+      0.0,
+      0.0,
+      1.0
+     ],
+     "type": "plane",
+     "units": {
+      "area": "mm2",
+      "centroid": "mm",
+      "normal": "1"
+     }
+    },
+    {
+     "area": 3520.0,
+     "centroid": [
+      -1.1304088978001594e-15,
+      6.0,
+      28.0
+     ],
+     "face_index": 4,
+     "face_match": {
+      "candidates": [
+       4
+      ],
+      "status": "matched"
+     },
+     "id": "plane:0.000,6.000,28.000",
+     "normal": [
+      0.0,
+      1.0,
+      0.0
+     ],
+     "type": "plane",
+     "units": {
+      "area": "mm2",
+      "centroid": "mm",
+      "normal": "1"
+     }
+    }
+   ],
+   "id": "R08-flange-perpendicular",
+   "measured": 0.0,
+   "range": [
+    0.0,
+    0.1
+   ],
+   "residual": 0.0,
+   "scale": 0.1,
+   "status": "pass",
+   "type": "perpendicular",
+   "unit": "deg",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {},
+   "error": null,
+   "features": [
+    {
+     "area": 479.9999999999999,
+     "centroid": [
+      5.551115123125784e-17,
+      2.9999999999999996,
+      50.0
+     ],
+     "face_index": 5,
+     "face_match": {
+      "candidates": [
+       5
+      ],
+      "status": "matched"
+     },
+     "id": "plane:0.000,3.000,50.000",
+     "normal": [
+      0.0,
+      0.0,
+      1.0
+     ],
+     "type": "plane",
+     "units": {
+      "area": "mm2",
+      "centroid": "mm",
+      "normal": "1"
+     }
+    },
+    {
+     "area": 3087.841215276027,
+     "centroid": [
+      -5.2354562307859e-16,
+      19.818386411566266,
+      0.0
+     ],
+     "face_index": 1,
+     "face_match": {
+      "candidates": [
+       1
+      ],
+      "status": "matched"
+     },
+     "id": "plane:0.000,19.818,0.000",
+     "normal": [
+      0.0,
+      0.0,
+      -1.0
+     ],
+     "type": "plane",
+     "units": {
+      "area": "mm2",
+      "centroid": "mm",
+      "normal": "1"
+     }
+    }
+   ],
+   "id": "R09-flange-top-parallel",
+   "measured": 0.0,
+   "range": [
+    0.0,
+    0.1
+   ],
+   "residual": 0.0,
+   "scale": 0.1,
+   "status": "pass",
+   "type": "parallel",
+   "unit": "deg",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {
+    "offset": 0.0,
+    "units": {
+     "offset": "mm"
+    }
+   },
+   "error": null,
+   "features": [
+    {
+     "area": 144.98253746776044,
+     "centroid": [
+      -25.0,
+      25.0,
+      8.0
+     ],
+     "face_index": 9,
+     "face_match": {
+      "area_result": "2 faces within tolerance share the feature's area",
+      "candidates": [
+       9
+      ],
+      "geometric_candidates": [
+       9,
+       11
+      ],
+      "near": {
+       "dist_m": 0.0,
+       "face": 9,
+       "query_m": [
+        -0.025,
+        0.025,
+        0.008
+       ]
+      },
+      "resolved_by": "near",
+      "status": "matched"
+     },
+     "id": "plane:-25.000,25.000,8.000",
+     "normal": [
+      0.0,
+      0.0,
+      1.0
+     ],
+     "type": "plane",
+     "units": {
+      "area": "mm2",
+      "centroid": "mm",
+      "normal": "1"
+     }
+    },
+    {
+     "area": 144.98253746776044,
+     "centroid": [
+      25.0,
+      25.0,
+      8.0
+     ],
+     "face_index": 11,
+     "face_match": {
+      "area_result": "2 faces within tolerance share the feature's area",
+      "candidates": [
+       11
+      ],
+      "geometric_candidates": [
+       9,
+       11
+      ],
+      "near": {
+       "dist_m": 0.0,
+       "face": 11,
+       "query_m": [
+        0.025,
+        0.025,
+        0.008
+       ]
+      },
+      "resolved_by": "near",
+      "status": "matched"
+     },
+     "id": "plane:25.000,25.000,8.000",
+     "normal": [
+      0.0,
+      0.0,
+      1.0
+     ],
+     "type": "plane",
+     "units": {
+      "area": "mm2",
+      "centroid": "mm",
+      "normal": "1"
+     }
+    }
+   ],
+   "id": "R10-pads-coplanar",
+   "measured": 0.0,
+   "range": [
+    0.0,
+    0.05
+   ],
+   "residual": 0.0,
+   "scale": 0.05,
+   "status": "pass",
+   "type": "coplanar",
+   "unit": "mm",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {},
+   "error": null,
+   "features": [],
+   "id": "R11-mirror-x",
+   "measured": 0.0,
+   "range": [
+    0.0,
+    60.0
+   ],
+   "residual": 0.0,
+   "scale": 60.0,
+   "status": "pass",
+   "type": "mirror_symmetry",
+   "unit": "mm3",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {},
+   "error": null,
+   "features": [],
+   "id": "R12-keepout-clearance",
+   "measured": 4.0,
+   "range": [
+    2.0,
+    null
+   ],
+   "residual": 0.0,
+   "scale": 0.02,
+   "status": "pass",
+   "type": "clearance",
+   "unit": "mm",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {},
+   "error": null,
+   "features": [],
+   "id": "R13-keepout-interference",
+   "measured": 0.0,
+   "range": [
+    0.0,
+    1.0
+   ],
+   "residual": 0.0,
+   "scale": 1.0,
+   "status": "pass",
+   "type": "interference",
+   "unit": "mm3",
+   "violation": 0.0,
+   "weight": 1.0
+  },
+  {
+   "details": {},
+   "error": null,
+   "features": [],
+   "id": "R14-volume",
+   "measured": 40226.977442,
+   "range": [
+    38000.0,
+    47000.0
+   ],
+   "residual": 0.0,
+   "scale": 9000.0,
+   "status": "pass",
+   "type": "volume",
+   "unit": "mm3",
+   "violation": 0.0,
+   "weight": 1.0
+  }
+ ],
+ "schema_version": 1,
+ "score": [
+  0,
+  0.0
+ ],
+ "summary": {
+  "error": 0,
+  "fail": 0,
+  "pass": 14,
+  "total": 14
+ },
+ "units": {
+  "angle": "deg",
+  "area": "mm2",
+  "length": "mm",
+  "volume": "mm3"
+ },
+ "violation_score": 0.0
+}

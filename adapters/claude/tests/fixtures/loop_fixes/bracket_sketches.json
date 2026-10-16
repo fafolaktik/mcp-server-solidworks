@@ -1,0 +1,62 @@
+{
+ "Sketch1": {
+  "operationId": "cd32c7e0-f47c-4f7e-89b5-a0eca44b3c2e",
+  "status": "COMPLETED",
+  "verified": true,
+  "stateVersion": 1,
+  "cadState": {
+   "stateVersion": 1,
+   "activeDocument": "bracket_dimensioned.SLDPRT",
+   "documentType": "PART",
+   "features": [
+    "{\"name\":\"Sketch1\",\"sketch\":{\"counts\":{\"line\":6},\"segments\":[{\"construction\":false,\"kind\":\"line\",\"x1\":0.0,\"y1\":0.0,\"x2\":0.04,\"y2\":0.0},{\"construction\":false,\"kind\":\"line\",\"x1\":0.04,\"y1\":0.0,\"x2\":0.04,\"y2\":0.006},{\"construction\":false,\"kind\":\"line\",\"x1\":0.04,\"y1\":0.006,\"x2\":0.006,\"y2\":0.006},{\"construction\":false,\"kind\":\"line\",\"x1\":0.006,\"y1\":0.006,\"x2\":0.006,\"y2\":0.05},{\"construction\":false,\"kind\":\"line\",\"x1\":0.006,\"y1\":0.05,\"x2\":0.0,\"y2\":0.05},{\"construction\":false,\"kind\":\"line\",\"x1\":0.0,\"y1\":0.05,\"x2\":0.0,\"y2\":0.0}]},\"dimensions\":[{\"name\":\"D1@Sketch1@bracket_dimensioned.Part\",\"value_si\":0.04,\"type\":\"linear\",\"segments\":[],\"points\":[{\"x\":0.0,\"y\":0.0,\"endpoint_of\":[0,5]},{\"x\":0.04,\"y\":0.0,\"endpoint_of\":[0,1]}]},{\"name\":\"D2@Sketch1@bracket_dimensioned.Part\",\"value_si\":0.006,\"type\":\"linear\",\"segments\":[],\"points\":[{\"x\":0.04,\"y\":0.0,\"endpoint_of\":[0,1]},{\"x\":0.04,\"y\":0.006,\"endpoint_of\":[1,2]}]},{\"name\":\"D3@Sketch1@bracket_dimensioned.Part\",\"value_si\":0.006,\"type\":\"linear\",\"segments\":[],\"points\":[{\"x\":0.006,\"y\":0.05,\"endpoint_of\":[3,4]},{\"x\":0.0,\"y\":0.05,\"endpoint_of\":[4,5]}]},{\"name\":\"D4@Sketch1@bracket_dimensioned.Part\",\"value_si\":0.05,\"type\":\"linear\",\"segments\":[],\"points\":[{\"x\":0.0,\"y\":0.05,\"endpoint_of\":[4,5]},{\"x\":0.0,\"y\":0.0,\"endpoint_of\":[0,5]}]}],\"plane\":{\"frame\":{\"origin\":[0.0,0.0,0.0],\"xdir\":[0.0,1.0,0.0],\"ydir\":[0.0,0.0,1.0]},\"ref\":\"Top Plane\"}}"
+   ],
+   "dimensions": []
+  }
+ },
+ "Sketch2": {
+  "operationId": "3d5353be-9055-4fc9-8f8f-60ab7c31a488",
+  "status": "COMPLETED",
+  "verified": true,
+  "stateVersion": 1,
+  "cadState": {
+   "stateVersion": 1,
+   "activeDocument": "bracket_dimensioned.SLDPRT",
+   "documentType": "PART",
+   "features": [
+    "{\"name\":\"Sketch2\",\"sketch\":{\"counts\":{\"arc_circle\":1},\"segments\":[{\"construction\":false,\"kind\":\"arc/circle\",\"cx\":0.025,\"cy\":0.025,\"radius\":0.008}]},\"dimensions\":[{\"name\":\"D1@Sketch2@bracket_dimensioned.Part\",\"value_si\":0.016,\"type\":\"diameter\",\"segments\":[0]},{\"name\":\"D2@Sketch2@bracket_dimensioned.Part\",\"value_si\":0.025,\"type\":\"horizontal\",\"segments\":[],\"points\":[{\"x\":0.025,\"y\":0.025,\"center_of\":0}],\"external\":1},{\"name\":\"D3@Sketch2@bracket_dimensioned.Part\",\"value_si\":0.025,\"type\":\"vertical\",\"segments\":[],\"points\":[{\"x\":0.025,\"y\":0.025,\"center_of\":0}],\"external\":1}],\"plane\":{\"frame\":{\"origin\":[0.0,0.0,0.0],\"xdir\":[0.0,1.0,0.0],\"ydir\":[-1.0,0.0,0.0]},\"ref\":\"Front Plane\"}}"
+   ],
+   "dimensions": []
+  }
+ },
+ "Sketch3": {
+  "operationId": "c9118af1-5cbd-4cb1-8636-40085ce16bee",
+  "status": "COMPLETED",
+  "verified": true,
+  "stateVersion": 2,
+  "cadState": {
+   "stateVersion": 2,
+   "activeDocument": "bracket_dimensioned.SLDPRT",
+   "documentType": "PART",
+   "features": [
+    "{\"name\":\"Sketch3\",\"sketch\":{\"counts\":{\"arc_circle\":1},\"segments\":[{\"construction\":false,\"kind\":\"arc/circle\",\"cx\":0.025,\"cy\":-0.025,\"radius\":0.008}]},\"dimensions\":[{\"name\":\"D1@Sketch3@bracket_dimensioned.Part\",\"value_si\":0.016,\"type\":\"diameter\",\"segments\":[0]},{\"name\":\"D2@Sketch3@bracket_dimensioned.Part\",\"value_si\":0.025,\"type\":\"horizontal\",\"segments\":[],\"points\":[{\"x\":0.025,\"y\":-0.025,\"center_of\":0}],\"external\":1},{\"name\":\"D3@Sketch3@bracket_dimensioned.Part\",\"value_si\":0.025,\"type\":\"vertical\",\"segments\":[],\"points\":[{\"x\":0.025,\"y\":-0.025,\"center_of\":0}],\"external\":1}],\"plane\":{\"frame\":{\"origin\":[0.0,0.0,0.0],\"xdir\":[0.0,1.0,0.0],\"ydir\":[-1.0,0.0,0.0]},\"ref\":\"Front Plane\"}}"
+   ],
+   "dimensions": []
+  }
+ },
+ "Sketch4": {
+  "operationId": "ff86e061-dcb3-41f2-9d3b-db25ade4ca38",
+  "status": "COMPLETED",
+  "verified": true,
+  "stateVersion": 1,
+  "cadState": {
+   "stateVersion": 1,
+   "activeDocument": "bracket_dimensioned.SLDPRT",
+   "documentType": "PART",
+   "features": [
+    "{\"name\":\"Sketch4\",\"sketch\":{\"counts\":{\"arc_circle\":2},\"segments\":[{\"construction\":false,\"kind\":\"arc/circle\",\"cx\":0.025,\"cy\":0.025,\"radius\":0.004225},{\"construction\":false,\"kind\":\"arc/circle\",\"cx\":0.025,\"cy\":-0.025,\"radius\":0.004225}]},\"dimensions\":[{\"name\":\"D1@Sketch4@bracket_dimensioned.Part\",\"value_si\":0.00845,\"type\":\"diameter\",\"segments\":[0]},{\"name\":\"D2@Sketch4@bracket_dimensioned.Part\",\"value_si\":0.025,\"type\":\"horizontal\",\"segments\":[],\"points\":[{\"x\":0.025,\"y\":0.025,\"center_of\":0}],\"external\":1},{\"name\":\"D3@Sketch4@bracket_dimensioned.Part\",\"value_si\":0.025,\"type\":\"vertical\",\"segments\":[],\"points\":[{\"x\":0.025,\"y\":0.025,\"center_of\":0}],\"external\":1},{\"name\":\"D4@Sketch4@bracket_dimensioned.Part\",\"value_si\":0.00845,\"type\":\"diameter\",\"segments\":[1]},{\"name\":\"D5@Sketch4@bracket_dimensioned.Part\",\"value_si\":0.025,\"type\":\"horizontal\",\"segments\":[],\"points\":[{\"x\":0.025,\"y\":-0.025,\"center_of\":1}],\"external\":1},{\"name\":\"D6@Sketch4@bracket_dimensioned.Part\",\"value_si\":0.025,\"type\":\"vertical\",\"segments\":[],\"points\":[{\"x\":0.025,\"y\":-0.025,\"center_of\":1}],\"external\":1}],\"plane\":{\"frame\":{\"origin\":[0.0,0.0,0.0],\"xdir\":[0.0,1.0,0.0],\"ydir\":[-1.0,0.0,0.0]},\"ref\":\"Front Plane\"}}"
+   ],
+   "dimensions": []
+  }
+ }
+}

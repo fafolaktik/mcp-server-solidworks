@@ -232,6 +232,7 @@ namespace SolidworksExecution.Services
                     var sObj = new JObject();
                     sObj["name"] = sketchFeat.Name;
                     sObj["sketch"] = ReadSketch(theSketch, true); // FULL geometry, rounded
+                    sObj["dimensions"] = ReadSketchDimensions(sketchFeat, theSketch);
                     var pl = ReadSketchPlane(theSketch);
                     if (pl != null) sObj["plane"] = pl;
                     results.Add(sObj.ToString(Newtonsoft.Json.Formatting.None));
@@ -544,6 +545,23 @@ namespace SolidworksExecution.Services
 
             var dims = ReadDisplayDimensions(feat, seenDims);
             if (dims.Count > 0) fj["dimensions"] = dims;
+
+            // The profile sketch an extrude/cut/revolve consumes is its ProfileFeature SUB-feature —
+            // name it so a consumer can go feature -> sketch without relying on tree adjacency.
+            if (type != "ProfileFeature")
+            {
+                try
+                {
+                    var sub = feat.GetFirstSubFeature() as IFeature;
+                    int subGuard = 0;
+                    while (sub != null && subGuard++ < 200)
+                    {
+                        if (sub.GetTypeName2() == "ProfileFeature") { fj["profile_sketch"] = sub.Name; break; }
+                        sub = sub.GetNextSubFeature() as IFeature;
+                    }
+                }
+                catch { }
+            }
 
             var sketch = feat.GetSpecificFeature2() as ISketch;
             if (sketch != null)
@@ -982,6 +1000,126 @@ namespace SolidworksExecution.Services
                 dispObj = feat.GetNextDisplayDimension(dispObj);
             }
             return arr;
+        }
+
+        // ONE sketch's display dimensions with what each is attached to. `segments` are indices into the
+        // SAME array ReadSketch(full) emits (same enumeration, same skip rule), `points` are this
+        // sketch's points ({x,y} in the sketch frame; `center_of` = the arc/circle segment whose center
+        // it is; `endpoint_of` = the segments it ends — a line LENGTH dimension attaches to the line's
+        // two end points, not to the segment), `external` counts attachments outside the sketch
+        // (origin, model edges). Attribution
+        // comes from the annotation's attached entities, never from matching values.
+        private JArray ReadSketchDimensions(IFeature sketchFeat, ISketch sketch)
+        {
+            var arr = new JArray();
+            var segIndex = new Dictionary<string, int>();
+            var centerOf = new Dictionary<string, int>();
+            var endpointOf = new Dictionary<string, List<int>>();
+            var ownPoints = new HashSet<string>();
+            try
+            {
+                object[] segs = sketch.GetSketchSegments() as object[];
+                int idx = 0;
+                if (segs != null)
+                    foreach (var s in segs)
+                    {
+                        var seg = s as ISketchSegment;
+                        if (seg == null || ReadSegment(seg) == null) continue;
+                        segIndex[IdKey(seg.GetID())] = idx;
+                        ISketchPoint a = null, b = null;
+                        if (seg.GetType() == 0)
+                        {
+                            var ln = seg as ISketchLine;
+                            a = ln?.IGetStartPoint2(); b = ln?.IGetEndPoint2();
+                        }
+                        else if (seg.GetType() == 1)
+                        {
+                            var arc = seg as ISketchArc;
+                            var c = arc?.IGetCenterPoint2();
+                            if (c != null) centerOf[IdKey(c.GetID())] = idx;
+                            a = arc?.IGetStartPoint2(); b = arc?.IGetEndPoint2();
+                        }
+                        // A line's length dimension attaches to its two END POINTS, not the segment
+                        // (observed live) — record point -> segments so the consumer can resolve it by ID.
+                        foreach (var ep in new[] { a, b })
+                        {
+                            if (ep == null) continue;
+                            string k = IdKey(ep.GetID());
+                            if (!endpointOf.TryGetValue(k, out var lst)) endpointOf[k] = lst = new List<int>();
+                            if (!lst.Contains(idx)) lst.Add(idx);
+                        }
+                        idx++;
+                    }
+                object[] pts = sketch.GetSketchPoints2() as object[];
+                if (pts != null)
+                    foreach (var o in pts)
+                        if (o is ISketchPoint sp) ownPoints.Add(IdKey(sp.GetID()));
+            }
+            catch (Exception ex) { ExecLog.Write($"ReadSketchDimensions index err: {ex.Message}"); }
+
+            object dispObj = sketchFeat.GetFirstDisplayDimension();
+            int guard = 0;
+            while (dispObj != null && guard++ < 500)
+            {
+                var disp = dispObj as IDisplayDimension;
+                var dim = disp?.GetDimension2(0) as IDimension;
+                if (dim != null)
+                {
+                    var dj = new JObject();
+                    dj["name"] = dim.FullName;
+                    double val = dim.Value;
+                    try
+                    {
+                        var sv = dim.GetSystemValue3(1, null) as double[];   // 1 = swThisConfiguration
+                        if (sv != null && sv.Length > 0) val = sv[0];
+                    }
+                    catch { }
+                    dj["value_si"] = R6(val);
+                    int t = 0;
+                    try { t = disp.Type2; } catch { }
+                    dj["type"] = DimTypeName(t);
+                    var segArr = new JArray();
+                    var ptArr = new JArray();
+                    int external = 0;
+                    try
+                    {
+                        var ann = disp.GetAnnotation() as IAnnotation;
+                        object[] ents = ann?.GetAttachedEntities3() as object[];
+                        if (ents != null)
+                            foreach (var e in ents)
+                            {
+                                if (e is ISketchSegment es)
+                                {
+                                    if (segIndex.TryGetValue(IdKey(es.GetID()), out int si)) segArr.Add(si);
+                                    else external++;
+                                }
+                                else if (e is ISketchPoint ep && ownPoints.Contains(IdKey(ep.GetID())))
+                                {
+                                    var pj = new JObject { ["x"] = R6(ep.X), ["y"] = R6(ep.Y) };
+                                    if (centerOf.TryGetValue(IdKey(ep.GetID()), out int ci)) pj["center_of"] = ci;
+                                    if (endpointOf.TryGetValue(IdKey(ep.GetID()), out var eo)) pj["endpoint_of"] = new JArray(eo);
+                                    ptArr.Add(pj);
+                                }
+                                else external++;
+                            }
+                    }
+                    catch (Exception ex) { ExecLog.Write($"ReadSketchDimensions attach err: {ex.Message}"); }
+                    dj["segments"] = segArr;
+                    if (ptArr.Count > 0) dj["points"] = ptArr;
+                    if (external > 0) dj["external"] = external;
+                    arr.Add(dj);
+                }
+                dispObj = sketchFeat.GetNextDisplayDimension(dispObj);
+            }
+            return arr;
+        }
+
+        // Stable key for a sketch entity ID (ISketchSegment/ISketchPoint.GetID → int[2]).
+        private static string IdKey(object id)
+        {
+            if (id is int[] a) return string.Join(",", a);
+            if (id is Array arr) { var parts = new List<string>(); foreach (var x in arr) parts.Add(Convert.ToString(x)); return string.Join(",", parts); }
+            return Convert.ToString(id);
         }
 
         // full=false (recipe/summary): counts (zero buckets dropped) + an inline {cx,cy,r} when the
@@ -1748,7 +1886,11 @@ namespace SolidworksExecution.Services
                 {
                     foreach (var pf in prevF)
                     {
-                        if (!pf.Planar || pf.Normal == null) continue;
+                        // Only a previous face that CHANGED (unmatched in pass 1) can have been trimmed/
+                        // extended into this one. An untouched coplanar face (e.g. one pad top when a
+                        // second, disconnected pad top is created on the same plane) must not swallow a
+                        // genuinely new face — that hid the second pad's top from created_faces.
+                        if (pf.Matched || !pf.Planar || pf.Normal == null) continue;
                         double dot = pf.Normal[0] * cf.Normal[0] + pf.Normal[1] * cf.Normal[1] + pf.Normal[2] * cf.Normal[2];
                         if (dot < 1.0 - 1e-6) continue; // must be parallel, SAME sign
                         double d = (pf.Point[0] - cf.Point[0]) * cf.Normal[0]

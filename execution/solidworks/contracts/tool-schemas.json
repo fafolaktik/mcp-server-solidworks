@@ -76,7 +76,7 @@
   "output": "→ see execution-response.json (add_sketch_entities returns result_geometry: {segment_count, counts})"
  },
  "add_sketch_constraint": {
-  "description": "Applies a geometric constraint to sketch entities in the active sketch. Single-entity constraints (horizontal, vertical) need only px1/py1. Two-entity constraints (coincident, parallel, perpendicular, tangent, equal, midpoint) also require px2/py2. entity_type1/2 defaults to 'SKETCHSEGMENT'; use 'SKETCHPOINT' for point-based constraints.",
+  "description": "Applies a geometric constraint to sketch entities in the active sketch. Single-entity constraints (horizontal, vertical) need only px1/py1. Two-entity constraints (coincident, parallel, perpendicular, tangent, equal, midpoint) also require px2/py2. entity_type1/2 defaults to 'SKETCHSEGMENT'; use 'SKETCHPOINT' for point-based constraints; entity_type2 'ORIGIN' = the sketch origin (Point1@Origin). Coordinates are SKETCH-frame (mapped to model space via the sketch transform, as in add_dimension).",
   "input": {
    "operation_id": "string (required, unique idempotency key)",
    "state_version": "integer (required, must match current execution state)",
@@ -87,25 +87,29 @@
     "px2": "number (optional — X coordinate of point on second entity; required for two-entity constraints)",
     "py2": "number (optional — Y coordinate of point on second entity; required for two-entity constraints)",
     "entity_type1": "string (optional, default 'SKETCHSEGMENT' — 'SKETCHSEGMENT' or 'SKETCHPOINT')",
-    "entity_type2": "string (optional, default 'SKETCHSEGMENT' — 'SKETCHSEGMENT' or 'SKETCHPOINT')"
+    "entity_type2": "string (optional, default 'SKETCHSEGMENT' — 'SKETCHSEGMENT', 'SKETCHPOINT' or 'ORIGIN' (px2/py2 ignored))"
    }
   },
   "output": "→ see execution-response.json"
  },
  "add_dimension": {
-  "description": "Applies a smart dimension to a sketch segment by selecting it via a point on the segment. px/py must lie on or very near the target segment (e.g. the midpoint of a line). This approach works reliably for any sketch geometry, not just simple rectangles.",
+  "description": "Adds a driving dimension in a sketch by selecting the sketch entity nearest (px, py) and sets it to value. COORDINATE CONVENTION (2026-10): px/py and the label offsets are SKETCH-frame coordinates — the same frame add_sketch_entity draws in and analyze_model(sketch) reports (ISketchPoint.X/Y); the service maps them to model space through ISketch.ModelToSketchTransform⁻¹ before SelectByID2 / AddDimension2 / AddSpecificDimension (previously the sketch numbers were passed as MODEL x,y with z=0, which only worked on a sketch whose frame is the model XY plane). Optional: sketch_name opens an existing sketch (closed + rebuilt afterwards); entity_type 'point' picks a sketch point; to_origin adds the sketch origin as the second entity; orientation horizontal|vertical (sketch axes) uses AddSpecificDimension (11/12).",
   "input": {
    "operation_id": "string (required, unique idempotency key)",
    "state_version": "integer (required, must match current execution state)",
    "params": {
-    "px": "number (X coordinate of a point on the target segment, in document units)",
-    "py": "number (Y coordinate of a point on the target segment, in document units)",
-    "value": "number (dimension value in document units)",
-    "label_offset_x": "number (optional, default 0.0 — X offset from px for the dimension label position)",
-    "label_offset_y": "number (optional, default -0.015 — Y offset from py for the dimension label position)"
+    "px": "number (sketch-frame X of a point on the target entity, meters)",
+    "py": "number (sketch-frame Y of a point on the target entity, meters)",
+    "value": "number (dimension value in meters)",
+    "label_offset_x": "number (optional, default 0.0 — sketch-frame X offset from px for the label)",
+    "label_offset_y": "number (optional, default -0.015 — sketch-frame Y offset from py for the label)",
+    "sketch_name": "string (optional — dimension this existing sketch: opened, dimensioned, closed, rebuilt; blank = the active sketch)",
+    "entity_type": "string (optional, default 'segment'): 'segment' | 'point'",
+    "to_origin": "boolean (optional, default false — second entity = the sketch origin, a position dimension)",
+    "orientation": "string (optional, default 'auto'): 'auto' | 'horizontal' | 'vertical' (sketch axes; requires to_origin)"
    }
   },
-  "output": "→ see execution-response.json"
+  "output": "→ see execution-response.json — result_geometry {dimension: full name (modify_dimension input), short_name: 'D1@Sketch3', sketch, type, requested, effective}; CadState.Dimensions = [full name]"
  },
  "extrude_feature": {
   "description": "Creates a 3D feature from the active sketch profile. Exits sketch mode automatically. feature_type discriminator: 'boss' (solid extrusion, default), 'cut' (material removal, requires existing solid body), 'revolve' (solid of revolution — requires angle and axis coords), 'sweep' (swept solid — requires path_sketch name), 'loft' (lofted solid — requires profiles JSON array of ≥2 sketch names).",
@@ -591,7 +595,7 @@
   "output": "One-line report: verified_criteria PASS/FAIL | topology A/B (EXACT|DIFFER) | volume A/B + dV% | area A/B + dA% | cg_distance. With detail='faces', a trailing faces: matched/MISSING/EXTRA breakdown."
  },
  "check_contract": {
-  "description": "[ADAPTER-ONLY — no ToolController/SolidWorksService case] Design-contract check of the ACTIVE part through the external cadcritic CLI. The adapter exports the part to a temporary STEP via the EXISTING export_document op, runs `cadcritic check <step> <contract>` as a SUBPROCESS (cadcritic is never imported — process boundary; stdout is its one JSON document, exit 0/1 = report, 2/3/4 = error document), reads analyze_model(faces), and maps every cadcritic feature descriptor to a face index by geometry in metres: same type (plane <-> planar face; hole/boss <-> cylinder — analyze_model carries no inside/outside sense), normal/axis parallel (|sin| <= 1e-5), radius within 1e-5 m, plane offset or point-on-axis within 1e-5 m after converting the contract length unit. Several candidates -> tie-break by area (face area vs cadcritic's descriptor area within 1e-6 m2; plane descriptors only — cadcritic reports no hole/boss area; analyze_model exposes no face boundary, so there is no point-on-face test). Exactly one face left -> face_index (face_match.resolved_by='area' when the tie-break decided); zero or several -> face_index null, reported explicitly in face_mapping (never guessed). The temporary STEP is deleted afterwards. Read-only: no geometry or state_version change.",
+  "description": "[ADAPTER-ONLY — no ToolController/SolidWorksService case] Design-contract check of the ACTIVE part through the external cadcritic CLI. The adapter exports the part to a temporary STEP via the EXISTING export_document op, runs `cadcritic check <step> <contract>` as a SUBPROCESS (cadcritic is never imported — process boundary; stdout is its one JSON document, exit 0/1 = report, 2/3/4 = error document), reads analyze_model(faces), and maps every cadcritic feature descriptor to a face index by geometry in metres: same type (plane <-> planar face; hole/boss <-> cylinder — analyze_model carries no inside/outside sense), normal/axis parallel (|sin| <= 1e-5), radius within 1e-5 m, plane offset or point-on-axis within 1e-5 m after converting the contract length unit. Several candidates -> tie-break by area (face area vs cadcritic's descriptor area within 1e-6 m2; plane descriptors only — cadcritic reports no hole/boss area; analyze_model exposes no face boundary, so there is no point-on-face test), then analyze_model(faces, near=<cadcritic centroid in metres>, k=1): decides only if that face is a remaining candidate and no other candidate is equally near (distance to the faces' representative points). Exactly one face left -> face_index (face_match.resolved_by='area' or 'near' when a tie-break decided); zero or several -> face_index null, reported explicitly in face_mapping (never guessed). The temporary STEP is deleted afterwards. Read-only: no geometry or state_version change.",
   "input": {
    "operation_id": "n/a at this level — the underlying export_document / analyze_model calls each carry their own operation_id (uuid4) on /api/tool/execute",
    "state_version": "n/a at this level — the underlying calls thread the adapter's tracked state_version (one-shot resync-retry on INVALID_STATE_VERSION)",
@@ -600,6 +604,18 @@
    }
   },
   "output": "cadcritic's check report JSON (SPEC.md section 9) with, per feature descriptor (requirements[].features[] and requirements[].error.matched[]), face_index (int | null) + face_match {status: matched|unmatched|multiple, candidates, reason?, resolved_by?, geometric_candidates?}; top-level score = [error_count, violation_score]; top-level face_mapping {source, tolerance, features, matched, unmatched[], multiple[]}. FAILED | <CODE> | ... string on contract-not-found, cadcritic-not-found, export/analyze failure, cadcritic usage/input/processing error, or timeout."
+ },
+ "dimension_for_face": {
+  "description": "[ADAPTER-ONLY — no ToolController/SolidWorksService case] face index -> driving dimension. Orchestrates existing reads: analyze_model(faces) for the target face, analyze_model(feature_map) for the feature whose created_faces lie on the face's surface (same plane + normal side, or a point on the same cylinder, 1e-5), analyze_model(features) for that feature's profile_sketch and own dimensions, analyze_model(sketch) for segments, the sketch frame and each dimension's ATTACHED segments. Cylinder -> arc/circle with the same radius whose center lies on the axis; side wall -> the line whose endpoints lie in the face plane; cap parallel to the sketch -> the extrude's depth dimension (or not_dimension_driven when the face lies in the sketch plane). The returned dimension is the one attached to that segment (diameter/radial for a circle, linear/horizontal/vertical for a line) — never matched by value; zero or several candidates at any step are reported. add_if_missing=true adds a dimension at the segment's current size via add_dimension(sketch_name=...).",
+  "input": {
+   "operation_id": "n/a at this level — each underlying read (and the optional add_dimension) carries its own operation_id on /api/tool/execute",
+   "state_version": "n/a at this level — the underlying calls thread the adapter's tracked state_version (one-shot resync-retry on INVALID_STATE_VERSION)",
+   "params": {
+    "face_index": "integer (required — face index from analyze_model(faces) / check_contract face_index)",
+    "add_if_missing": "boolean (optional, default false — when the matched segment is undimensioned, add a driving dimension at its current size and return its name)"
+   }
+  },
+  "output": "JSON: status (dimensioned | undimensioned | added | not_dimension_driven | multiple_dimensions | ambiguous_feature | ambiguous_segment | unattributed | no_segment | no_profile_sketch | unsupported), face_index, face_kind, feature, sketch, role (cylinder_wall | side_wall | extrude_cap | sketch_plane), segment (sketch-frame geometry + index), dimension {name, value_si, type, segments, points?}, position_dimensions?, other_dimensions?, candidates?, reason?, add_dimension? (the params that would dimension the segment). FAILED | <CODE> | ... on a read failure."
  },
  "open_new_assembly": {
   "description": "Opens a new blank ASSEMBLY document (the twin of open_new_part). Template: explicit template_path, else the user-configured default assembly template, else the first *.asmdot found. Bumps state_version.",

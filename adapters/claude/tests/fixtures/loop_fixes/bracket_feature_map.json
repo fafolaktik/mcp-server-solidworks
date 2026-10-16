@@ -1,0 +1,15 @@
+{
+ "operationId": "34854876-6fd8-4854-8797-c6ac02f6ef26",
+ "status": "COMPLETED",
+ "verified": true,
+ "stateVersion": 2,
+ "cadState": {
+  "stateVersion": 2,
+  "activeDocument": "bracket_dimensioned.SLDPRT",
+  "documentType": "PART",
+  "features": [
+   "{\"feature_count\":12,\"map\":[{\"feature\":\"Front Plane\",\"type\":\"RefPlane\"},{\"feature\":\"Top Plane\",\"type\":\"RefPlane\"},{\"feature\":\"Right Plane\",\"type\":\"RefPlane\"},{\"feature\":\"Origin\",\"type\":\"OriginProfileFeature\"},{\"feature\":\"Sketch1\",\"type\":\"ProfileFeature\"},{\"feature\":\"Boss-Extrude1\",\"type\":\"Extrusion\",\"delta\":{\"faces\":8,\"edges\":18,\"vertices\":12},\"created_faces\":[{\"point\":[0.0,0.0,0.025],\"planar\":true,\"normal\":[0.0,-1.0,0.0],\"area\":0.004},{\"point\":[0.0,0.02,0.0],\"planar\":true,\"normal\":[0.0,0.0,-1.0],\"area\":0.0032},{\"point\":[0.0,0.04,0.003],\"planar\":true,\"normal\":[0.0,1.0,0.0],\"area\":0.00048},{\"point\":[0.0,0.023,0.006],\"planar\":true,\"normal\":[0.0,0.0,1.0],\"area\":0.00272},{\"point\":[0.0,0.006,0.028],\"planar\":true,\"normal\":[0.0,1.0,0.0],\"area\":0.00352},{\"point\":[0.0,0.003,0.05],\"planar\":true,\"normal\":[0.0,0.0,1.0],\"area\":0.00048},{\"point\":[0.04,0.02,0.025],\"planar\":true,\"normal\":[1.0,0.0,0.0],\"area\":0.000504},{\"point\":[-0.04,0.02,0.025],\"planar\":true,\"normal\":[-1.0,0.0,0.0],\"area\":0.000504}]},{\"feature\":\"Sketch2\",\"type\":\"ProfileFeature\"},{\"feature\":\"Boss-Extrude2\",\"type\":\"ICE\",\"delta\":{\"faces\":2,\"edges\":2,\"vertices\":0},\"created_faces\":[{\"point\":[-0.017,0.025,0.007],\"planar\":false,\"area\":0.000101},{\"point\":[-0.025,0.025,0.008],\"planar\":true,\"normal\":[0.0,0.0,1.0],\"area\":0.000201}]},{\"feature\":\"Sketch3\",\"type\":\"ProfileFeature\"},{\"feature\":\"Boss-Extrude3\",\"type\":\"ICE\",\"delta\":{\"faces\":2,\"edges\":2,\"vertices\":0},\"created_faces\":[{\"point\":[0.033,0.025,0.007],\"planar\":false,\"area\":0.000101},{\"point\":[0.025,0.025,0.008],\"planar\":true,\"normal\":[0.0,0.0,1.0],\"area\":0.000201}]},{\"feature\":\"Sketch4\",\"type\":\"ProfileFeature\"},{\"feature\":\"Cut-Extrude1\",\"type\":\"ICE\",\"delta\":{\"faces\":2,\"edges\":4,\"vertices\":0},\"created_faces\":[{\"point\":[0.029225,0.025,0.004],\"planar\":false,\"area\":0.000212},{\"point\":[-0.020775,0.025,0.004],\"planar\":false,\"area\":0.000212}]}]}"
+  ],
+  "dimensions": []
+ }
+}
