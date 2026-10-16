@@ -14,15 +14,22 @@ cadcritic's contract length unit:
 analyze_model reports no inside/outside sense for a cylinder, so hole and boss both map to
 `cylinder`.
 
-Tie-break: when several faces pass the geometric test and cadcritic reports the feature's
-`area` (plane descriptors only — SPEC 9.1 gives hole/boss no area), keep the faces whose area
-agrees within AREA_TOL_M2. If area cannot separate them, ask SolidWorks for the face nearest
-cadcritic's centroid (analyze_model(faces, near=centroid_m, k=1)); it decides only when it is a
-remaining candidate and no other candidate is equally near. NOTE: `near` measures distance to
-each face's representative (UV-mid) point — a proximity ranking, not a point-on-face test
-(analyze_model exposes no face boundary). Exactly one face left -> face_index, tagged
-`resolved_by: area|near`. Zero or several -> face_index null with the reason and the candidate
-indices. Never a guess.
+Tie-break by area, when several faces pass the geometric test (cadcritic >= 1.1 reports `area` on
+every descriptor; 1.0 only on planes — without it this step is skipped):
+  plane       keep the single face whose area agrees within AREA_TOL_M2.
+  hole / boss the candidates share one axis line and radius, so they are either pieces of ONE
+              wall (a cylinder split into several faces) or walls of DIFFERENT coaxial features
+              (an interrupted bore). Find the set of candidate faces whose SUMMED area agrees
+              with the feature's area (tolerance AREA_TOL_M2 per face summed). Exactly one such
+              set -> the feature is those faces — one face for an interrupted bore, all of them
+              for a split wall. Several sets -> still ambiguous.
+If area cannot decide, ask SolidWorks for the face nearest cadcritic's centroid
+(analyze_model(faces, near=centroid_m, k=1)); it decides only when it is a remaining candidate and
+no other candidate is equally near. NOTE: `near` measures distance to each face's representative
+(UV-mid) point — a proximity ranking, not a point-on-face test (analyze_model exposes no face
+boundary). A resolved feature gets face_indices (every face of it) and face_index (the lowest of
+them), tagged `resolved_by: area|near` when a tie-break decided. Otherwise face_index null with
+the reason and the candidate indices. Never a guess.
 
 Precision note: analyze_model rounds to 6 decimals in SI units — <= 5e-7 m per coordinate and
 <= 5e-7 m2 per area (i.e. areas are only known to ~1 mm2).
@@ -36,7 +43,8 @@ import sys
 
 DIR_TOL = 1e-5        # |sin(angle)| between unit vectors
 LINEAR_TOL_M = 1e-5   # radius, point-on-axis, plane offset — metres
-AREA_TOL_M2 = 1e-6    # tie-break only: two rounding half-steps of analyze_model's m2 area
+AREA_TOL_M2 = 1e-6    # tie-break only: two rounding half-steps of analyze_model's m2 area, per face
+MAX_SUBSET_FACES = 12 # hole/boss summed-area search is exhaustive (2^n sets) up to this many faces
 
 _UNIT_TO_M = {"mm": 1e-3, "cm": 1e-2, "m": 1.0, "in": 0.0254}
 
@@ -243,7 +251,7 @@ def _break_tie_by_near(desc: dict, to_m: float, hits: list, area_result: dict, n
 
 
 def _break_tie_by_area(desc: dict, to_m: float, hits: list) -> dict:
-    """Several geometric candidates: keep those whose area agrees with cadcritic's, if reported."""
+    """Several geometric candidates: decide by cadcritic's area, if reported (see module doc)."""
     candidates = [f["i"] for f in hits]
     area = desc.get("area")
     if not isinstance(area, (int, float)) or isinstance(area, bool):
@@ -251,6 +259,8 @@ def _break_tie_by_area(desc: dict, to_m: float, hits: list) -> dict:
                 "reason": f"{len(candidates)} faces within tolerance; cadcritic reports no area "
                           f"for a {desc.get('type')} to separate them"}
     area_m2 = float(area) * to_m * to_m
+    if desc.get("type") in ("hole", "boss"):
+        return _break_cylinder_tie_by_summed_area(area_m2, hits)
     same = [f["i"] for f in hits if isinstance(f.get("area"), (int, float))
             and abs(float(f["area"]) - area_m2) <= AREA_TOL_M2]
     if len(same) == 1:
@@ -265,6 +275,35 @@ def _break_tie_by_area(desc: dict, to_m: float, hits: list) -> dict:
             "geometric_candidates": candidates}
 
 
+def _break_cylinder_tie_by_summed_area(area_m2: float, hits: list) -> dict:
+    """Hole/boss: the candidates share the feature's axis line and radius. The feature is the ONE
+    set of them whose summed area equals its area — a single face (another coaxial feature owns
+    the rest) or several (one wall split into faces). Exhaustive over the candidate sets."""
+    candidates = [f["i"] for f in hits]
+    areas = [(f["i"], float(f["area"])) for f in hits if isinstance(f.get("area"), (int, float))]
+    if len(areas) != len(hits):
+        return {"status": "multiple", "candidates": candidates,
+                "reason": "a candidate face reports no area — summed-area test not possible"}
+    if len(areas) > MAX_SUBSET_FACES:
+        return {"status": "multiple", "candidates": candidates,
+                "reason": f"{len(areas)} coaxial candidate faces — beyond the summed-area search limit"}
+    matches = []
+    for mask in range(1, 1 << len(areas)):
+        subset = [areas[k] for k in range(len(areas)) if mask >> k & 1]
+        if abs(sum(a for _i, a in subset) - area_m2) <= AREA_TOL_M2 * len(subset):
+            matches.append(sorted(i for i, _a in subset))
+    if len(matches) == 1:
+        return {"status": "matched", "candidates": matches[0], "resolved_by": "area",
+                "geometric_candidates": candidates}
+    if not matches:
+        return {"status": "multiple", "candidates": candidates,
+                "reason": f"{len(candidates)} coaxial faces within tolerance; no set of them sums "
+                          f"to the feature's area"}
+    return {"status": "multiple", "candidates": sorted({i for m in matches for i in m}),
+            "reason": f"{len(matches)} different sets of coaxial faces sum to the feature's area",
+            "geometric_candidates": candidates, "area_sets": matches}
+
+
 def _descriptor_lists(requirement: dict):
     yield requirement.get("features") or []
     err = requirement.get("error")
@@ -273,9 +312,11 @@ def _descriptor_lists(requirement: dict):
 
 
 def annotate_report(report: dict, faces: list, near_lookup=None) -> dict:
-    """Return a copy of cadcritic's check report with `face_index` (+ `face_match`) on every
-    feature descriptor, a top-level `score` = [error_count, violation_score] (SPEC 9.2's
-    comparison key) and a `face_mapping` summary listing every unresolved feature by id.
+    """Return a copy of cadcritic's check report with `face_index`, `face_indices` and
+    `face_match` on every feature descriptor, a top-level `score` = [error_count,
+    violation_score] (SPEC 9.2's comparison key) and a `face_mapping` summary listing every
+    unresolved feature by id. face_indices = every face of a resolved feature (several for a
+    split cylinder wall), face_index = the lowest of them; [] / null when unresolved.
     near_lookup: see match_descriptor (None = no near tie-break)."""
     out = json.loads(json.dumps(report))
     report_unit = (out.get("units") or {}).get("length", "mm")
@@ -288,7 +329,9 @@ def annotate_report(report: dict, faces: list, near_lookup=None) -> dict:
                 if fid not in resolved:
                     resolved[fid] = match_descriptor(desc, faces, report_unit, near_lookup)
                 m = resolved[fid]
-                desc["face_index"] = m["candidates"][0] if m["status"] == "matched" else None
+                matched = m["status"] == "matched"
+                desc["face_index"] = m["candidates"][0] if matched else None
+                desc["face_indices"] = list(m["candidates"]) if matched else []
                 desc["face_match"] = dict(m)
                 ids = used_by.setdefault(fid, [])
                 if req.get("id") not in ids:

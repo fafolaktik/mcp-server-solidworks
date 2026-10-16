@@ -1,0 +1,11 @@
+{
+ "argv": [
+  "cadcritic.exe",
+  "check",
+  "active_part.step",
+  "hole_split.contract.json"
+ ],
+ "exit_code": 0,
+ "stdout": "{\n  \"command\": \"check\",\n  \"contract\": \"hole_split.contract.json\",\n  \"error_count\": 0,\n  \"part\": \"active_part.step\",\n  \"passed\": true,\n  \"requirements\": [\n    {\n      \"details\": {},\n      \"error\": null,\n      \"features\": [\n        {\n          \"area\": 251.32741228718345,\n          \"axis\": [\n            0.0,\n            0.0,\n            1.0\n          ],\n          \"center\": [\n            0.0,\n            10.0,\n            5.0\n          ],\n          \"centroid\": [\n            0.0,\n            10.0,\n            5.0\n          ],\n          \"id\": \"hole:0.000,10.000,5.000\",\n          \"length\": 10.0,\n          \"radius\": 4.0,\n          \"type\": \"hole\",\n          \"units\": {\n            \"area\": \"mm2\",\n            \"axis\": \"1\",\n            \"center\": \"mm\",\n            \"centroid\": \"mm\",\n            \"length\": \"mm\",\n            \"radius\": \"mm\"\n          }\n        }\n      ],\n      \"id\": \"B1-hole-diameter\",\n      \"measured\": 8.0,\n      \"range\": [\n        7.9,\n        8.1\n      ],\n      \"residual\": 0.0,\n      \"scale\": 0.2,\n      \"status\": \"pass\",\n      \"type\": \"hole_diameter\",\n      \"unit\": \"mm\",\n      \"violation\": 0.0,\n      \"weight\": 1.0\n    }\n  ],\n  \"schema_version\": 1,\n  \"summary\": {\n    \"error\": 0,\n    \"fail\": 0,\n    \"pass\": 1,\n    \"total\": 1\n  },\n  \"units\": {\n    \"angle\": \"deg\",\n    \"area\": \"mm2\",\n    \"length\": \"mm\",\n    \"volume\": \"mm3\"\n  },\n  \"violation_score\": 0.0\n}\n",
+ "stderr": ""
+}

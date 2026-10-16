@@ -1,0 +1,15 @@
+{
+ "operationId": "a26cdbbc-811e-4671-9190-051f132105e6",
+ "status": "COMPLETED",
+ "verified": true,
+ "stateVersion": 4,
+ "cadState": {
+  "stateVersion": 4,
+  "activeDocument": "bore_interrupted.SLDPRT",
+  "documentType": "PART",
+  "features": [
+   "{\"face_count\":12,\"faces\":[{\"i\":0,\"planar\":false,\"area\":0.000377,\"kind\":\"cylinder\",\"origin\":[-0.04,0.01,0.01],\"axis\":[1.0,0.0,0.0],\"radius\":0.004,\"point\":[0.0225,0.01,0.014]},{\"i\":1,\"planar\":true,\"area\":0.00025,\"normal\":[1.0,0.0,0.0],\"point\":[-0.005,0.01,0.0125]},{\"i\":2,\"planar\":true,\"area\":0.0004,\"normal\":[0.0,0.0,1.0],\"point\":[0.005,0.01,0.005]},{\"i\":3,\"planar\":true,\"area\":0.00025,\"normal\":[-1.0,0.0,0.0],\"point\":[0.015,0.01,0.0125]},{\"i\":4,\"planar\":true,\"area\":0.0003,\"normal\":[0.0,0.0,1.0],\"point\":[0.0225,0.01,0.02]},{\"i\":5,\"planar\":true,\"area\":0.00035,\"normal\":[1.0,0.0,0.0],\"point\":[0.03,0.01,0.01]},{\"i\":6,\"planar\":false,\"area\":0.000628,\"kind\":\"cylinder\",\"origin\":[-0.04,0.01,0.01],\"axis\":[1.0,0.0,0.0],\"radius\":0.004,\"point\":[-0.0175,0.01,0.014]},{\"i\":7,\"planar\":true,\"area\":0.0009,\"normal\":[0.0,1.0,0.0],\"point\":[0.0,0.02,0.01]},{\"i\":8,\"planar\":true,\"area\":0.0012,\"normal\":[0.0,0.0,-1.0],\"point\":[0.0,0.01,0.0]},{\"i\":9,\"planar\":true,\"area\":0.0005,\"normal\":[0.0,0.0,1.0],\"point\":[-0.0175,0.01,0.02]},{\"i\":10,\"planar\":true,\"area\":0.0009,\"normal\":[0.0,-1.0,0.0],\"point\":[0.0,0.0,0.01]},{\"i\":11,\"planar\":true,\"area\":0.00035,\"normal\":[-1.0,0.0,0.0],\"point\":[-0.03,0.01,0.01]}]}"
+  ],
+  "dimensions": []
+ }
+}

@@ -1,0 +1,41 @@
+{
+ "schema_version": 1,
+ "requirements": [
+  {
+   "id": "A1-bore-left-diameter",
+   "type": "hole_diameter",
+   "select": {
+    "type": "hole",
+    "region": {
+     "max": [
+      0,
+      null,
+      null
+     ]
+    }
+   },
+   "range": [
+    7.9,
+    8.1
+   ]
+  },
+  {
+   "id": "A2-bore-right-diameter",
+   "type": "hole_diameter",
+   "select": {
+    "type": "hole",
+    "region": {
+     "min": [
+      0,
+      null,
+      null
+     ]
+    }
+   },
+   "range": [
+    7.9,
+    8.1
+   ]
+  }
+ ]
+}

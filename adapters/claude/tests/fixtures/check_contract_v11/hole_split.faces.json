@@ -1,0 +1,15 @@
+{
+ "operationId": "bfc9ff6f-b7ad-4407-9a78-dafd4ca3e019",
+ "status": "COMPLETED",
+ "verified": true,
+ "stateVersion": 7,
+ "cadState": {
+  "stateVersion": 7,
+  "activeDocument": "hole_split.SLDPRT",
+  "documentType": "PART",
+  "features": [
+   "{\"face_count\":12,\"faces\":[{\"i\":0,\"planar\":false,\"area\":0.000126,\"kind\":\"cylinder\",\"origin\":[0.0,0.01,-0.005],\"axis\":[0.0,0.0,1.0],\"radius\":0.004,\"point\":[0.004,0.01,0.005]},{\"i\":1,\"planar\":true,\"area\":0.0002,\"normal\":[1.0,0.0,0.0],\"point\":[0.02,0.01,0.005]},{\"i\":2,\"planar\":true,\"area\":0.000375,\"normal\":[0.0,0.0,-1.0],\"point\":[0.01,0.01,0.0]},{\"i\":3,\"planar\":true,\"area\":0.0002,\"normal\":[0.0,1.0,0.0],\"point\":[0.01,0.02,0.005]},{\"i\":4,\"planar\":false,\"area\":0.000126,\"kind\":\"cylinder\",\"origin\":[0.0,0.01,-0.005],\"axis\":[0.0,0.0,1.0],\"radius\":0.004,\"point\":[-0.004,0.01,0.005]},{\"i\":5,\"planar\":true,\"area\":0.000375,\"normal\":[0.0,0.0,1.0],\"point\":[0.01,0.01,0.01]},{\"i\":6,\"planar\":true,\"area\":0.0002,\"normal\":[0.0,-1.0,0.0],\"point\":[0.01,0.0,0.005]},{\"i\":7,\"planar\":true,\"area\":0.000375,\"normal\":[0.0,0.0,-1.0],\"point\":[-0.01,0.01,0.0]},{\"i\":8,\"planar\":true,\"area\":0.0002,\"normal\":[0.0,1.0,0.0],\"point\":[-0.01,0.02,0.005]},{\"i\":9,\"planar\":true,\"area\":0.000375,\"normal\":[0.0,0.0,1.0],\"point\":[-0.01,0.01,0.01]},{\"i\":10,\"planar\":true,\"area\":0.0002,\"normal\":[0.0,-1.0,0.0],\"point\":[-0.01,0.0,0.005]},{\"i\":11,\"planar\":true,\"area\":0.0002,\"normal\":[-1.0,0.0,0.0],\"point\":[-0.02,0.01,0.005]}]}"
+  ],
+  "dimensions": []
+ }
+}

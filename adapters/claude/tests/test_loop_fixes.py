@@ -234,6 +234,10 @@ def test_equal_area_pad_tops_resolved_by_near_as_live():
     r10 = next(r for r in out["requirements"] if r["id"] == "R10-pads-coplanar")
     assert [(d["face_index"], d["face_match"]["resolved_by"]) for d in r10["features"]] == [(9, "near"), (11, "near")]
     assert r10["features"][0]["face_match"]["near"] == {"query_m": [-0.025, 0.025, 0.008], "face": 9, "dist_m": 0.0}
+    # The live recording predates face_indices; every single-face feature has face_indices == [face_index].
+    for req in out["requirements"]:
+        for d in req["features"]:
+            assert d.pop("face_indices") == ([d["face_index"]] if d["face_index"] is not None else [])
     assert out == live
     assert out["face_mapping"]["multiple"] == []
 

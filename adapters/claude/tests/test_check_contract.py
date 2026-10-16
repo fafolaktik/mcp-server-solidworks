@@ -62,6 +62,7 @@ def _strip_additions(report):
     for req in out["requirements"]:
         for desc in req["features"] + ((req.get("error") or {}).get("matched") or []):
             desc.pop("face_index", None)
+            desc.pop("face_indices", None)
             desc.pop("face_match", None)
     return out
 

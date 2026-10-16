@@ -2641,16 +2641,19 @@ def check_contract(contract_path: str) -> str:
     a separate process), and maps every feature cadcritic reports onto analyze_model('faces')
     indices by geometry: same type (plane / cylinder), parallel normal or axis, same radius, and
     same plane or axis line — all within 1e-5 (metres for lengths). Several faces passing →
-    the one whose area equals cadcritic's (planes only; cadcritic gives holes/bosses no area),
-    then the one analyze_model(faces, near=<cadcritic centroid>, k=1) returns, if unambiguous.
+    area decides (cadcritic >= 1.1 reports it for every feature): a plane is the one face with
+    its area; a hole/boss is the one SET of coaxial faces whose areas SUM to its area — one face
+    of an interrupted bore, or every face of a wall split into several. Still tied → the face
+    analyze_model(faces, near=<cadcritic centroid>, k=1) returns, if unambiguous.
 
     contract_path: absolute path of the contract JSON (keep-out paths in it resolve relative to
         the contract's folder).
     Returns cadcritic's check report as JSON, unchanged except for:
-      - every feature descriptor gains `face_index` (the face to edit — same index as
-        create_sketch(face_index) / extrude_feature(up_to_face_index)) and `face_match`;
-        face_index is null when zero faces, or several that area cannot separate, matched —
-        never guessed;
+      - every feature descriptor gains `face_indices` (every face of the feature — several for
+        a split cylinder wall), `face_index` (the lowest of them: the face to edit — same index
+        as create_sketch(face_index) / extrude_feature(up_to_face_index); any of a split wall's
+        faces leads to the same feature) and `face_match` (status, resolved_by area|near);
+        face_index is null / face_indices [] when the faces could not be resolved — never guessed;
       - `score` = [error_count, violation_score]: the comparison key (lexicographically
         smaller = better design; compare successive revisions with it);
       - `face_mapping`: counts plus every unmatched / multiply-matched feature by id.

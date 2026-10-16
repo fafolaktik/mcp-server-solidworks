@@ -1,0 +1,16 @@
+{
+ "schema_version": 1,
+ "requirements": [
+  {
+   "id": "B1-hole-diameter",
+   "type": "hole_diameter",
+   "select": {
+    "type": "hole"
+   },
+   "range": [
+    7.9,
+    8.1
+   ]
+  }
+ ]
+}
